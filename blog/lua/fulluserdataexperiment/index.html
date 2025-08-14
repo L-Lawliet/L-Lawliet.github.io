@@ -1,356 +1,352 @@
-<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>lua fulluserdata代替table的尝试 - L-Lawliet's Blog</title><meta name=viewport content="width=device-width,initial-scale=1"><meta name=generator content="Hugo 0.74.2"><meta property="og:site_name" content="L-Lawliet's Blog"><meta property="og:title" content="lua fulluserdata代替table的尝试"><meta property="og:description" content="lua fulluserdata代替table的尝试"><meta property="description" content="lua fulluserdata代替table的尝试"><meta property="og:url" content="https://l-lawliet.github.io/blog/lua/fulluserdataexperiment/"><meta property="og:type" content="article"><meta property="og:image" content="https://l-lawliet.github.io/img/2021/09/title/01.jpg"><meta property="og:image:alt" content="Colourful"><link rel=stylesheet href=/css/bundle.min.fadcacc3c6367d04125b20f860680a1f981cdb8b1effabafa1b44ab77d815bab.css integrity="sha256-+tysw8Y2fQQSWyD4YGgKH5gc24se/6uvobRKt32BW6s="><link rel=stylesheet href=/css/add-on.css></head><body><header id=site-header><nav id=site-nav><h1 class=nav-title><a href=/ class=nav>博客</a></h1><menu id=site-nav-menu class="flyout-menu menu"><a href=/ class="nav link"><i class="fa fa-home"></i>Home</a>
-<a href=/about class="nav link"><i class="far fa-id-card"></i>About</a>
-<a href=/blog class="nav link"><i class="far fa-newspaper"></i>Blog</a>
-<a href=/categories class="nav link"><i class="fas fa-sitemap"></i>Categories</a>
-<a href=/fantasyfactor class="nav link"><i class="fa fa-tools"></i>Fantasy Factor</a>
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><title>lua fulluserdata代替table的尝试 - L-Lawliet's Blog</title>
+<meta name=viewport content="width=device-width,initial-scale=1"><meta name=generator content="Hugo 0.123.0"><meta property="og:site_name" content="L-Lawliet's Blog"><meta property="og:title" content="lua fulluserdata代替table的尝试"><meta property="og:description" content="lua fulluserdata代替table的尝试"><meta property="description" content="lua fulluserdata代替table的尝试"><meta property="og:url" content="https://l-lawliet.github.io/blog/lua/fulluserdataexperiment/"><meta property="og:type" content="article"><meta property="og:image" content="https://l-lawliet.github.io/img/2021/09/title/01.jpg"><meta property="og:image:alt" content="Colourful"><link rel=stylesheet href=/css/bundle.min.9e134d9a3da09f2b306d683d24be385b78bef43c5cadeed78b6b270ece12ee95.css integrity="sha256-nhNNmj2gnyswbWg9JL44W3i+9Dxcre7Xi2snDs4S7pU="><link rel=stylesheet href=/css/add-on.css></head><body><header id=site-header><nav id=site-nav><h1 class=nav-title><a href=/ class=nav>博客</a></h1><menu id=site-nav-menu class="flyout-menu menu"><a href=/ class="nav link"><i class='fa fa-home'></i> Home</a>
+<a href=/about class="nav link"><i class='far fa-id-card'></i> About</a>
+<a href=/blog class="nav link"><i class='far fa-newspaper'></i> Blog</a>
+<a href=/categories class="nav link"><i class='fas fa-sitemap'></i> Categories</a>
+<a href=/fantasyfactor class="nav link"><i class='fa fa-tools'></i> Fantasy Factor</a>
 <a href=#share-menu class="nav link share-toggle"><i class="fas fa-share-alt">&nbsp;</i>Share</a>
-<a href=#search-input class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a></menu>
-<a href=#search-input class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
+<a href=#search-input class="nav link search-toggle"><i class="fas fa-search">&nbsp;</i>Search</a></menu><a href=#search-input class="nav search-toggle"><i class="fas fa-search fa-2x">&nbsp;</i></a>
 <a href=#share-menu class="nav share-toggle"><i class="fas fa-share-alt fa-2x">&nbsp;</i></a>
 <a href=#lang-menu class="nav lang-toggle" lang=zh-cn>zh-cn</a>
 <a href=#site-nav class="nav nav-toggle"><i class="fas fa-bars fa-2x"></i></a></nav><menu id=search class=menu><input id=search-input class="search-input menu"></input><div id=search-results class="search-results menu"></div></menu><menu id=lang-menu class="flyout-menu menu"><a href=# lang=zh-cn class="nav link active">中文 (zh-cn)</a>
-<a href=/en lang=en class="nav no-lang link">English (en)</a></menu>
-<menu id=share-menu class="flyout-menu menu"><h1>Share Post</h1><a href="//twitter.com/share?text=lua%20fulluserdata%e4%bb%a3%e6%9b%bftable%e7%9a%84%e5%b0%9d%e8%af%95&url=https%3a%2f%2fl-lawliet.github.io%2fblog%2flua%2ffulluserdataexperiment%2f" target=_blank rel=noopener class="nav share-btn twitter"><p>Twitter</p></a><a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fl-lawliet.github.io%2fblog%2flua%2ffulluserdataexperiment%2f" target=_blank rel=noopener class="nav share-btn facebook"><p>Facebook</p></a><a href="//www.reddit.com/submit?url=https%3a%2f%2fl-lawliet.github.io%2fblog%2flua%2ffulluserdataexperiment%2f&title=lua%20fulluserdata%e4%bb%a3%e6%9b%bftable%e7%9a%84%e5%b0%9d%e8%af%95" target=_blank rel=noopener class="nav share-btn reddit"><p>Reddit</p></a><a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fl-lawliet.github.io%2fblog%2flua%2ffulluserdataexperiment%2f&title=lua%20fulluserdata%e4%bb%a3%e6%9b%bftable%e7%9a%84%e5%b0%9d%e8%af%95" target=_blank rel=noopener class="nav share-btn linkedin"><p>LinkedIn</p></a><a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fl-lawliet.github.io%2fblog%2flua%2ffulluserdataexperiment%2f&description=lua%20fulluserdata%e4%bb%a3%e6%9b%bftable%e7%9a%84%e5%b0%9d%e8%af%95" target=_blank rel=noopener class="nav share-btn pinterest"><p>Pinterest</p></a><a href="mailto:?subject=%e6%9f%a5%e7%9c%8b%e6%9c%ac%e6%96%87%e7%9a%84%e4%bd%9c%e8%80%85 Lawliet&body=https%3a%2f%2fl-lawliet.github.io%2fblog%2flua%2ffulluserdataexperiment%2f" target=_blank class="nav share-btn email" data-proofer-ignore><p>Email</p></a></menu></header><div id=wrapper><section id=site-intro><a href=/><img src=https://l-lawliet.github.io/img/main/logo.jpg class=circle width=100 alt="Hugo Future Imperfect Slim"></a><header><h1>L-Lawliet's Blog</h1></header><main><p>记录游戏开发的点点滴滴</p></main><footer><ul class=socnet-icons><li><a href=//github.com/L-Lawliet target=_blank rel=noopener title=GitHub class="fab fa-github"></a></li><li><a href=//www.zhihu.com/column/UnityDiary target=_blank rel=noopener title=mastodon class="fab fa-zhihu"></a></li><li><a href=mailto:2771918131@qq.com target=_blank title=Email class="far fa-envelope"></a></li></ul></footer></section><main id=site-main><article><div class=post><header><div class=title><h2><a href=/blog/lua/fulluserdataexperiment/>lua fulluserdata代替table的尝试</a></h2><p>lua fulluserdata代替table的尝试</p></div><div class=meta><time datetime="2024-02-29 00:00:00 +0000 UTC">February 29, 2024</time><p>Lawliet</p></div></header><div id=socnet-share><a href="//twitter.com/share?text=lua%20fulluserdata%e4%bb%a3%e6%9b%bftable%e7%9a%84%e5%b0%9d%e8%af%95&url=https%3a%2f%2fl-lawliet.github.io%2fblog%2flua%2ffulluserdataexperiment%2f" target=_blank rel=noopener class="nav share-btn twitter"><p>Twitter</p></a><a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fl-lawliet.github.io%2fblog%2flua%2ffulluserdataexperiment%2f" target=_blank rel=noopener class="nav share-btn facebook"><p>Facebook</p></a><a href="//www.reddit.com/submit?url=https%3a%2f%2fl-lawliet.github.io%2fblog%2flua%2ffulluserdataexperiment%2f&title=lua%20fulluserdata%e4%bb%a3%e6%9b%bftable%e7%9a%84%e5%b0%9d%e8%af%95" target=_blank rel=noopener class="nav share-btn reddit"><p>Reddit</p></a><a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fl-lawliet.github.io%2fblog%2flua%2ffulluserdataexperiment%2f&title=lua%20fulluserdata%e4%bb%a3%e6%9b%bftable%e7%9a%84%e5%b0%9d%e8%af%95" target=_blank rel=noopener class="nav share-btn linkedin"><p>LinkedIn</p></a><a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fl-lawliet.github.io%2fblog%2flua%2ffulluserdataexperiment%2f&description=lua%20fulluserdata%e4%bb%a3%e6%9b%bftable%e7%9a%84%e5%b0%9d%e8%af%95" target=_blank rel=noopener class="nav share-btn pinterest"><p>Pinterest</p></a><a href="mailto:?subject=%e6%9f%a5%e7%9c%8b%e6%9c%ac%e6%96%87%e7%9a%84%e4%bd%9c%e8%80%85 Lawliet&body=https%3a%2f%2fl-lawliet.github.io%2fblog%2flua%2ffulluserdataexperiment%2f" target=_blank class="nav share-btn email" data-proofer-ignore><p>Email</p></a></div><div class=content><a href=/blog/lua/fulluserdataexperiment/ class=image style="--bg-image: url('https://l-lawliet.github.io/img/2021/09/title/01.jpg')"><img class=stretchH src=https://l-lawliet.github.io/img/2021/09/title/01.jpg alt=Colourful></a><p>使用fulluserdata来实现复杂的数据结构，然后尝试替代table，以验证是否可以实现更快的框架（Table的Value为Table时，会有内存不连续的情况，缓存不友好）</p><h2 id=环境>环境</h2><ul><li>xlua版本：2.1.16</li><li>lua版本：5.3.5</li><li>运行环境：Unity Editor</li><li>PC配置：i5 10400F</li></ul><blockquote><p>为了方便测试，所有的测试基于Unity Editor(PC)环境，采用Unity Profiler和Lua Profiler。</p></blockquote><h2 id=array>Array</h2><blockquote><p>以fulluserdata为基础，在C实现了一个Array[double]。</p></blockquote><p><strong>luaarray.h</strong>:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-C data-lang=C><span style=color:#75715e>#ifndef LUAARRAY_H
-</span><span style=color:#75715e>#define LUAARRAY_H
-</span><span style=color:#75715e></span>
-<span style=color:#75715e>#include</span> <span style=color:#75715e>&#34;lua.h&#34;</span><span style=color:#75715e>
-</span><span style=color:#75715e></span>
-<span style=color:#75715e>/*-------------------------------------------------------------------------*\
-</span><span style=color:#75715e>* Initializes the library.
-</span><span style=color:#75715e>\*-------------------------------------------------------------------------*/</span>
-LUA_API <span style=color:#66d9ef>int</span> <span style=color:#a6e22e>luaopen_array</span>(lua_State <span style=color:#f92672>*</span>L);
-
-
-<span style=color:#75715e>#endif </span><span style=color:#75715e>/* LUAARRAY_H */</span><span style=color:#75715e>
-</span></code></pre></div><p><strong>luaarray.c</strong>:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-C data-lang=C>
-<span style=color:#75715e>#include</span> <span style=color:#75715e>&#34;luaarray.h&#34;</span><span style=color:#75715e>
-</span><span style=color:#75715e></span>
-<span style=color:#75715e>#define LUA_LIB
-</span><span style=color:#75715e>#include</span> <span style=color:#75715e>&#34;lua.h&#34;</span><span style=color:#75715e>
-</span><span style=color:#75715e>#include</span> <span style=color:#75715e>&#34;lauxlib.h&#34;</span><span style=color:#75715e>
-</span><span style=color:#75715e>#include</span> <span style=color:#75715e>&#34;lualib.h&#34;</span><span style=color:#75715e>
-</span><span style=color:#75715e>#include</span> <span style=color:#75715e>&#34;limits.h&#34;</span><span style=color:#75715e>
-</span><span style=color:#75715e></span>
-<span style=color:#75715e>#define ARRAY_TAG &#34;LuaArrayMatetable&#34;
-</span><span style=color:#75715e></span>
-<span style=color:#66d9ef>typedef</span> <span style=color:#66d9ef>struct</span> NumArray {
-    <span style=color:#66d9ef>int</span> size;
-    <span style=color:#66d9ef>double</span> values[<span style=color:#ae81ff>1</span>];
-} NumArray;
-
-<span style=color:#66d9ef>static</span> NumArray <span style=color:#f92672>*</span><span style=color:#a6e22e>checkarray</span>(lua_State <span style=color:#f92672>*</span>L)
-{
-    <span style=color:#66d9ef>void</span> <span style=color:#f92672>*</span>ud <span style=color:#f92672>=</span> luaL_checkudata(L, <span style=color:#ae81ff>1</span>, ARRAY_TAG);
-    luaL_argcheck(L, ud <span style=color:#f92672>!=</span> NULL, <span style=color:#ae81ff>1</span>, <span style=color:#e6db74>&#34;&#39;array&#39; expected&#34;</span>);
-
-    <span style=color:#66d9ef>return</span> (NumArray <span style=color:#f92672>*</span>)ud;
-}
-
-<span style=color:#66d9ef>static</span> <span style=color:#66d9ef>double</span> <span style=color:#f92672>*</span><span style=color:#a6e22e>getelement</span>(lua_State <span style=color:#f92672>*</span>L)
-{
-    NumArray <span style=color:#f92672>*</span>a <span style=color:#f92672>=</span> checkarray(L);
-    <span style=color:#66d9ef>int</span> index <span style=color:#f92672>=</span> luaL_checkinteger(L,<span style=color:#ae81ff>2</span>) <span style=color:#f92672>-</span> <span style=color:#ae81ff>1</span>;
-
-    luaL_argcheck(L,a <span style=color:#f92672>!=</span> NULL,<span style=color:#ae81ff>1</span>,<span style=color:#e6db74>&#34;&#39;array&#39; expected.&#34;</span>);
-    luaL_argcheck(L,<span style=color:#ae81ff>0</span> <span style=color:#f92672>&lt;=</span> index <span style=color:#f92672>&amp;&amp;</span> index <span style=color:#f92672>&lt;</span> a<span style=color:#f92672>-&gt;</span>size,<span style=color:#ae81ff>2</span>,<span style=color:#e6db74>&#34;index out of range.&#34;</span>);
-
-    <span style=color:#66d9ef>return</span> <span style=color:#f92672>&amp;</span>a<span style=color:#f92672>-&gt;</span>values[index];
-}
-
-<span style=color:#66d9ef>static</span> <span style=color:#66d9ef>int</span> <span style=color:#a6e22e>newarray</span>(lua_State<span style=color:#f92672>*</span> L)
-{
-    <span style=color:#66d9ef>int</span> i, n;
-
-    n <span style=color:#f92672>=</span> luaL_checkinteger(L,<span style=color:#ae81ff>1</span>);
-
-    luaL_argcheck(L, n <span style=color:#f92672>&gt;=</span> <span style=color:#ae81ff>1</span>, <span style=color:#ae81ff>1</span>, <span style=color:#e6db74>&#34;invalid size.&#34;</span>);
-
-    size_t nbytes <span style=color:#f92672>=</span> <span style=color:#66d9ef>sizeof</span>(NumArray) <span style=color:#f92672>+</span> (n <span style=color:#f92672>-</span> <span style=color:#ae81ff>1</span>) <span style=color:#f92672>*</span> <span style=color:#66d9ef>sizeof</span>(<span style=color:#66d9ef>double</span>);
-
-    NumArray<span style=color:#f92672>*</span> a <span style=color:#f92672>=</span> (NumArray<span style=color:#f92672>*</span>) lua_newuserdata(L,nbytes);
-
-    a<span style=color:#f92672>-&gt;</span>size <span style=color:#f92672>=</span> n;
-
-    <span style=color:#66d9ef>for</span> (i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; i <span style=color:#f92672>&lt;</span> n <span style=color:#f92672>-</span> <span style=color:#ae81ff>1</span>; <span style=color:#f92672>++</span>i)
-        a<span style=color:#f92672>-&gt;</span>values[i] <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
-
-    luaL_getmetatable(L, ARRAY_TAG);
-
-    lua_setmetatable(L, <span style=color:#f92672>-</span><span style=color:#ae81ff>2</span>);
-
-    <span style=color:#66d9ef>return</span> <span style=color:#ae81ff>1</span>;
-}
-
-<span style=color:#66d9ef>static</span> <span style=color:#66d9ef>int</span> <span style=color:#a6e22e>setarray</span>(lua_State<span style=color:#f92672>*</span> L)
-{
-    <span style=color:#66d9ef>double</span> value <span style=color:#f92672>=</span> luaL_checknumber(L, <span style=color:#ae81ff>3</span>);
-
-    <span style=color:#f92672>*</span>getelement(L) <span style=color:#f92672>=</span> value;
-
-    <span style=color:#66d9ef>return</span> <span style=color:#ae81ff>0</span>;
-}
-
-<span style=color:#66d9ef>static</span> <span style=color:#66d9ef>int</span> <span style=color:#a6e22e>getarray</span>(lua_State<span style=color:#f92672>*</span> L)
-{
-    lua_pushnumber(L, <span style=color:#f92672>*</span>getelement(L));
-
-    <span style=color:#66d9ef>return</span> <span style=color:#ae81ff>1</span>;
-}
-
-<span style=color:#66d9ef>static</span> <span style=color:#66d9ef>int</span> <span style=color:#a6e22e>getsize</span>(lua_State<span style=color:#f92672>*</span> L)
-{
-    NumArray <span style=color:#f92672>*</span>a <span style=color:#f92672>=</span> checkarray(L);
-
-    lua_pushnumber(L, a<span style=color:#f92672>-&gt;</span>size);
-
-    <span style=color:#66d9ef>return</span> <span style=color:#ae81ff>1</span>;
-}
-
-<span style=color:#66d9ef>static</span> <span style=color:#66d9ef>int</span> <span style=color:#a6e22e>array2string</span>(lua_State<span style=color:#f92672>*</span> L)
-{
-    NumArray<span style=color:#f92672>*</span> a <span style=color:#f92672>=</span> checkarray(L);
-    lua_pushfstring(L,<span style=color:#e6db74>&#34;array(%d)&#34;</span>,a<span style=color:#f92672>-&gt;</span>size);
-    <span style=color:#66d9ef>return</span> <span style=color:#ae81ff>1</span>;
-}
-
-<span style=color:#66d9ef>static</span> luaL_Reg arraylib_f [] <span style=color:#f92672>=</span> {
-    {<span style=color:#e6db74>&#34;new&#34;</span>, newarray},
-    {NULL, NULL}
-};
-
-<span style=color:#66d9ef>static</span> luaL_Reg arraylib_m [] <span style=color:#f92672>=</span> {
-    {<span style=color:#e6db74>&#34;set&#34;</span>, setarray},
-    {<span style=color:#e6db74>&#34;get&#34;</span>, getarray},
-    {<span style=color:#e6db74>&#34;size&#34;</span>, getsize},
-    {<span style=color:#e6db74>&#34;__tostring&#34;</span>, array2string},
-    {NULL, NULL}
-};
-
-LUA_API <span style=color:#66d9ef>int</span> <span style=color:#a6e22e>luaopen_array</span>(lua_State<span style=color:#f92672>*</span> L)
-{
-    luaL_newmetatable(L, ARRAY_TAG);
-
-    lua_pushstring(L, <span style=color:#e6db74>&#34;__index&#34;</span>);
-    lua_pushvalue(L, <span style=color:#f92672>-</span><span style=color:#ae81ff>2</span>);
-    lua_settable(L, <span style=color:#f92672>-</span><span style=color:#ae81ff>3</span>);
-
-    luaL_setfuncs(L, arraylib_m, <span style=color:#ae81ff>0</span>);
-    
-    luaL_newlib(L, arraylib_f);
-
-    <span style=color:#66d9ef>return</span> <span style=color:#ae81ff>1</span>;
-}
-</code></pre></div><h2 id=对比>对比</h2><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Lua data-lang=Lua><span style=color:#66d9ef>local</span> array <span style=color:#f92672>=</span> require <span style=color:#e6db74>&#34;array&#34;</span>
-
-<span style=color:#66d9ef>local</span> num <span style=color:#f92672>=</span> <span style=color:#ae81ff>1000000</span>
-
-<span style=color:#66d9ef>function</span> <span style=color:#a6e22e>TestTable</span>()
-    <span style=color:#66d9ef>local</span> time <span style=color:#f92672>=</span> os.clock()
-
-    <span style=color:#66d9ef>local</span> tb <span style=color:#f92672>=</span> {}
-
-    <span style=color:#66d9ef>local</span> value
-
-    time <span style=color:#f92672>=</span> os.clock()
-
-    <span style=color:#66d9ef>local</span> insert <span style=color:#f92672>=</span> table.insert
-
-    <span style=color:#66d9ef>for</span> i<span style=color:#f92672>=</span><span style=color:#ae81ff>1</span>,num <span style=color:#66d9ef>do</span>
-        tb[i] <span style=color:#f92672>=</span> i
-    <span style=color:#66d9ef>end</span>
-
-    print(string.format(<span style=color:#e6db74>&#34;set table: %sms&#34;</span>, (os.clock() <span style=color:#f92672>-</span> time) <span style=color:#f92672>*</span> <span style=color:#ae81ff>1000</span>))
-
-    time <span style=color:#f92672>=</span> os.clock()
-
-    <span style=color:#66d9ef>for</span> i<span style=color:#f92672>=</span><span style=color:#ae81ff>1</span>,num <span style=color:#66d9ef>do</span>
-        value <span style=color:#f92672>=</span> tb[i]
-    <span style=color:#66d9ef>end</span>
-
-    print(string.format(<span style=color:#e6db74>&#34;get table:%sms&#34;</span>, (os.clock() <span style=color:#f92672>-</span> time) <span style=color:#f92672>*</span> <span style=color:#ae81ff>1000</span>))
-<span style=color:#66d9ef>end</span>
-
-<span style=color:#66d9ef>function</span> <span style=color:#a6e22e>TestUserdata</span>()
-    <span style=color:#66d9ef>local</span> time <span style=color:#f92672>=</span> os.clock()
-
-    <span style=color:#66d9ef>local</span> arr <span style=color:#f92672>=</span> array.new(num)
-
-    <span style=color:#66d9ef>local</span> value
-
-    time <span style=color:#f92672>=</span> os.clock()
-    
-    <span style=color:#66d9ef>for</span> i<span style=color:#f92672>=</span><span style=color:#ae81ff>1</span>,num <span style=color:#66d9ef>do</span>
-        arr:set(i, i)
-    <span style=color:#66d9ef>end</span>
-
-    print(string.format(<span style=color:#e6db74>&#34;set array: %sms&#34;</span>, (os.clock() <span style=color:#f92672>-</span> time) <span style=color:#f92672>*</span> <span style=color:#ae81ff>1000</span>))
-
-    time <span style=color:#f92672>=</span> os.clock()
-
-    <span style=color:#66d9ef>for</span> i<span style=color:#f92672>=</span><span style=color:#ae81ff>1</span>,num <span style=color:#66d9ef>do</span>
-        value <span style=color:#f92672>=</span> arr:get(i)
-    <span style=color:#66d9ef>end</span>
-
-    print(string.format(<span style=color:#e6db74>&#34;get array:%sms&#34;</span>, (os.clock() <span style=color:#f92672>-</span> time) <span style=color:#f92672>*</span> <span style=color:#ae81ff>1000</span>))
-<span style=color:#66d9ef>end</span>
-
-print(num) 
-
-TestUserdata()
-
-TestTable()
-
-</code></pre></div><blockquote><p>在完成luaarray.c的实现后，就编写基于两者的对比用例，并且在unity中进行测试。原本以为fulluserdata的实现会比table性能好，最差也是相差无几，但实际情况却出人意料：</p></blockquote><table><thead><tr><th align=center>方案</th><th align=center>set耗时(ms)</th><th align=center>get耗时（ms）</th></tr></thead><tbody><tr><td align=center>Table</td><td align=center>24</td><td align=center>9</td></tr><tr><td align=center>Array</td><td align=center>82</td><td align=center>79</td></tr></tbody></table><h2 id=优化array>优化Array</h2><blockquote><p>从上面对比的情况可以看出，Table远远比Array快，特别在get的情况。在经过一番思考过后，排查出一个问题：那就是Array由于需要区分当前userdata类型，防止意外的内存指针传入导致出问题，所以使用了metatable，所以在调用时，会先判断metatable的情况。以此作为优化目标进行优化：</p></blockquote><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-C data-lang=C>
-<span style=color:#66d9ef>static</span> NumArray <span style=color:#f92672>*</span><span style=color:#a6e22e>checkarray</span>(lua_State <span style=color:#f92672>*</span>L)
-{
-    
-    <span style=color:#75715e>// 不再检查matetable 
-</span><span style=color:#75715e></span>    <span style=color:#75715e>//void *ud = luaL_checkudata(L, 1, ARRAY_TAG);
-</span><span style=color:#75715e></span>    <span style=color:#66d9ef>void</span> <span style=color:#f92672>*</span>ud <span style=color:#f92672>=</span> lua_touserdata(L, <span style=color:#ae81ff>1</span>);
-    luaL_argcheck(L, ud <span style=color:#f92672>!=</span> NULL, <span style=color:#ae81ff>1</span>, <span style=color:#e6db74>&#34;&#39;array&#39; expected&#34;</span>);
-
-    <span style=color:#66d9ef>return</span> (NumArray <span style=color:#f92672>*</span>)ud;
-}
-
-<span style=color:#66d9ef>static</span> <span style=color:#66d9ef>int</span> <span style=color:#a6e22e>newarray</span>(lua_State<span style=color:#f92672>*</span> L)
-{
-    <span style=color:#66d9ef>int</span> i, n;
-
-    n <span style=color:#f92672>=</span> luaL_checkinteger(L,<span style=color:#ae81ff>1</span>);
-
-    luaL_argcheck(L, n <span style=color:#f92672>&gt;=</span> <span style=color:#ae81ff>1</span>, <span style=color:#ae81ff>1</span>, <span style=color:#e6db74>&#34;invalid size.&#34;</span>);
-
-    size_t nbytes <span style=color:#f92672>=</span> <span style=color:#66d9ef>sizeof</span>(NumArray) <span style=color:#f92672>+</span> (n <span style=color:#f92672>-</span> <span style=color:#ae81ff>1</span>) <span style=color:#f92672>*</span> <span style=color:#66d9ef>sizeof</span>(<span style=color:#66d9ef>double</span>);
-
-    NumArray<span style=color:#f92672>*</span> a <span style=color:#f92672>=</span> (NumArray<span style=color:#f92672>*</span>) lua_newuserdata(L,nbytes);
-
-    a<span style=color:#f92672>-&gt;</span>size <span style=color:#f92672>=</span> n;
-
-    <span style=color:#66d9ef>for</span> (i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; i <span style=color:#f92672>&lt;</span> n <span style=color:#f92672>-</span> <span style=color:#ae81ff>1</span>; <span style=color:#f92672>++</span>i)
-        a<span style=color:#f92672>-&gt;</span>values[i] <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
-
-    <span style=color:#75715e>// 不再设置metatable
-</span><span style=color:#75715e></span>
-    <span style=color:#75715e>//luaL_getmetatable(L, ARRAY_TAG);
-</span><span style=color:#75715e></span>
-    <span style=color:#75715e>//lua_setmetatable(L, -2);
-</span><span style=color:#75715e></span>
-    <span style=color:#66d9ef>return</span> <span style=color:#ae81ff>1</span>;
-}
-
-<span style=color:#75715e>//将function赋值给array
-</span><span style=color:#75715e></span><span style=color:#66d9ef>static</span> luaL_Reg arraylib_f [] <span style=color:#f92672>=</span> {
-    {<span style=color:#e6db74>&#34;new&#34;</span>, newarray},
-    {<span style=color:#e6db74>&#34;set&#34;</span>, setarray},
-    {<span style=color:#e6db74>&#34;get&#34;</span>, getarray},
-    {<span style=color:#e6db74>&#34;size&#34;</span>, getsize},
-    {<span style=color:#e6db74>&#34;__tostring&#34;</span>, array2string}, <span style=color:#75715e>//print(a)时Lua会调用该元方法。
-</span><span style=color:#75715e></span>    {NULL, NULL}
-};
-
-</code></pre></div><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Lua data-lang=Lua><span style=color:#66d9ef>function</span> <span style=color:#a6e22e>TestUserdata</span>()
-    <span style=color:#66d9ef>local</span> time <span style=color:#f92672>=</span> os.clock()
-
-    <span style=color:#66d9ef>local</span> arr <span style=color:#f92672>=</span> array.new(num)
-
-    <span style=color:#66d9ef>local</span> value
-
-    time <span style=color:#f92672>=</span> os.clock()
-    
-    <span style=color:#66d9ef>local</span> set <span style=color:#f92672>=</span> array.set <span style=color:#75715e>--改为array的function，并缓存起来</span>
-
-    <span style=color:#66d9ef>for</span> i<span style=color:#f92672>=</span><span style=color:#ae81ff>1</span>,num <span style=color:#66d9ef>do</span>
-        set(arr, i, i)
-    <span style=color:#66d9ef>end</span>
-
-    print(string.format(<span style=color:#e6db74>&#34;set array: %sms&#34;</span>, (os.clock() <span style=color:#f92672>-</span> time) <span style=color:#f92672>*</span> <span style=color:#ae81ff>1000</span>))
-
-    time <span style=color:#f92672>=</span> os.clock()
-
-    <span style=color:#66d9ef>local</span> get <span style=color:#f92672>=</span> array.get <span style=color:#75715e>--改为array的function，并缓存起来</span>
-
-    <span style=color:#66d9ef>for</span> i<span style=color:#f92672>=</span><span style=color:#ae81ff>1</span>,num <span style=color:#66d9ef>do</span>
-        value <span style=color:#f92672>=</span> get(arr, i)
-    <span style=color:#66d9ef>end</span>
-
-    print(string.format(<span style=color:#e6db74>&#34;get array:%sms&#34;</span>, (os.clock() <span style=color:#f92672>-</span> time) <span style=color:#f92672>*</span> <span style=color:#ae81ff>1000</span>))
-<span style=color:#66d9ef>end</span>
-</code></pre></div><blockquote><p>测试后，耗时有所改善，但仍然不太乐观：</p></blockquote><table><thead><tr><th align=center>方案</th><th align=center>set耗时(ms)</th><th align=center>get耗时（ms）</th></tr></thead><tbody><tr><td align=center>Table</td><td align=center>24</td><td align=center>9</td></tr><tr><td align=center>Array (no metatable)</td><td align=center>44</td><td align=center>38</td></tr></tbody></table><blockquote><p>可以看出，metatable对于代码效率影响巨大。如果需要标记当前的内存指针是否正确，就需要另辟蹊径。</p></blockquote><h2 id=分析>分析</h2><ol><li>首先分析table的get耗时为什么比table的set要高？</li></ol><blockquote><p>这是因为table插入数据时存在扩容的情况。</p></blockquote><ol start=2><li>table的set为什么这么快？</li></ol><blockquote><p>这是有两个原因。<br>一是示例中的table放入的是number值，number值在table的Value中是以连续内存存在的，这是因为TValue是一个联合体，在number的情况下TValue就保存着值，因此内存是连续的，就不存在缓存不友好的情况。<br>二是table[x]在运行时是使用OP_SETTABLE和OP_GETTABLE两个指令。而示例中的array.set则需要使用多次OP_MOVE，最后还要调用OP_CALL，在指令中不占优，并且需要频繁操作寄存器导致耗时较大。</p></blockquote><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Lua data-lang=Lua><span style=color:#66d9ef>local</span> array <span style=color:#f92672>=</span> require <span style=color:#e6db74>&#34;array&#34;</span>
-
-<span style=color:#66d9ef>local</span> num <span style=color:#f92672>=</span> <span style=color:#ae81ff>1000</span>
-
-<span style=color:#66d9ef>local</span> a <span style=color:#f92672>=</span> {}
-
-<span style=color:#66d9ef>for</span> i<span style=color:#f92672>=</span><span style=color:#ae81ff>1</span>,num <span style=color:#66d9ef>do</span>
-    a[i] <span style=color:#f92672>=</span> i
-<span style=color:#66d9ef>end</span>
-
-main <span style=color:#f92672>&lt;</span>table.lua:<span style=color:#ae81ff>0</span>,<span style=color:#ae81ff>0</span><span style=color:#f92672>&gt;</span> (<span style=color:#ae81ff>12</span> instructions at <span style=color:#ae81ff>0000000000028</span>a70)       
-<span style=color:#ae81ff>0</span><span style=color:#f92672>+</span> params, <span style=color:#ae81ff>7</span> slots, <span style=color:#ae81ff>1</span> upvalue, <span style=color:#ae81ff>7</span> locals, <span style=color:#ae81ff>4</span> constants, <span style=color:#ae81ff>0</span> functions
-        <span style=color:#ae81ff>1</span>       [<span style=color:#ae81ff>1</span>]     GETTABUP        <span style=color:#ae81ff>0</span> <span style=color:#ae81ff>0</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>1</span>  ; _ENV <span style=color:#e6db74>&#34;require&#34;</span> 
-        <span style=color:#ae81ff>2</span>       [<span style=color:#ae81ff>1</span>]     LOADK           <span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>2</span>    ; <span style=color:#e6db74>&#34;array&#34;</span>        
-        <span style=color:#ae81ff>3</span>       [<span style=color:#ae81ff>1</span>]     CALL            <span style=color:#ae81ff>0</span> <span style=color:#ae81ff>2</span> <span style=color:#ae81ff>2</span>
-        <span style=color:#ae81ff>4</span>       [<span style=color:#ae81ff>3</span>]     LOADK           <span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>3</span>    ; <span style=color:#ae81ff>1000</span>
-        <span style=color:#ae81ff>5</span>       [<span style=color:#ae81ff>5</span>]     NEWTABLE        <span style=color:#ae81ff>2</span> <span style=color:#ae81ff>0</span> <span style=color:#ae81ff>0</span>
-        <span style=color:#ae81ff>6</span>       [<span style=color:#ae81ff>7</span>]     LOADK           <span style=color:#ae81ff>3</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>4</span>    ; <span style=color:#ae81ff>1</span>
-        <span style=color:#ae81ff>7</span>       [<span style=color:#ae81ff>7</span>]     MOVE            <span style=color:#ae81ff>4</span> <span style=color:#ae81ff>1</span>
-        <span style=color:#ae81ff>8</span>       [<span style=color:#ae81ff>7</span>]     LOADK           <span style=color:#ae81ff>5</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>4</span>    ; <span style=color:#ae81ff>1</span>
-        <span style=color:#ae81ff>9</span>       [<span style=color:#ae81ff>7</span>]     FORPREP         <span style=color:#ae81ff>3</span> <span style=color:#ae81ff>1</span>     ; to <span style=color:#ae81ff>11</span>
-        <span style=color:#ae81ff>10</span>      [<span style=color:#ae81ff>8</span>]     SETTABLE        <span style=color:#ae81ff>2</span> <span style=color:#ae81ff>6</span> <span style=color:#ae81ff>6</span>
-        <span style=color:#ae81ff>11</span>      [<span style=color:#ae81ff>7</span>]     FORLOOP         <span style=color:#ae81ff>3</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>2</span>    ; to <span style=color:#ae81ff>10</span>
-        <span style=color:#ae81ff>12</span>      [<span style=color:#ae81ff>9</span>]     RETURN          <span style=color:#ae81ff>0</span> <span style=color:#ae81ff>1</span>
-</code></pre></div><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Lua data-lang=Lua><span style=color:#66d9ef>local</span> array <span style=color:#f92672>=</span> require <span style=color:#e6db74>&#34;array&#34;</span>
-
-<span style=color:#66d9ef>local</span> num <span style=color:#f92672>=</span> <span style=color:#ae81ff>1000</span>
-
-<span style=color:#66d9ef>local</span> arr <span style=color:#f92672>=</span> array.new(num)
-
-<span style=color:#66d9ef>local</span> set <span style=color:#f92672>=</span> array.set
-
-<span style=color:#66d9ef>for</span> i<span style=color:#f92672>=</span><span style=color:#ae81ff>1</span>,num <span style=color:#66d9ef>do</span>
-    set(arr, i, i)
-<span style=color:#66d9ef>end</span>
-
-main <span style=color:#f92672>&lt;</span>table.lua:<span style=color:#ae81ff>0</span>,<span style=color:#ae81ff>0</span><span style=color:#f92672>&gt;</span> (<span style=color:#ae81ff>19</span> instructions at <span style=color:#ae81ff>00000000001</span>b8a70)
-<span style=color:#ae81ff>0</span><span style=color:#f92672>+</span> params, <span style=color:#ae81ff>12</span> slots, <span style=color:#ae81ff>1</span> upvalue, <span style=color:#ae81ff>8</span> locals, <span style=color:#ae81ff>6</span> constants, <span style=color:#ae81ff>0</span> functions
-        <span style=color:#ae81ff>1</span>       [<span style=color:#ae81ff>1</span>]     GETTABUP        <span style=color:#ae81ff>0</span> <span style=color:#ae81ff>0</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>1</span>  ; _ENV <span style=color:#e6db74>&#34;require&#34;</span>
-        <span style=color:#ae81ff>2</span>       [<span style=color:#ae81ff>1</span>]     LOADK           <span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>2</span>    ; <span style=color:#e6db74>&#34;array&#34;</span>
-        <span style=color:#ae81ff>3</span>       [<span style=color:#ae81ff>1</span>]     CALL            <span style=color:#ae81ff>0</span> <span style=color:#ae81ff>2</span> <span style=color:#ae81ff>2</span>
-        <span style=color:#ae81ff>4</span>       [<span style=color:#ae81ff>3</span>]     LOADK           <span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>3</span>    ; <span style=color:#ae81ff>1000</span>
-        <span style=color:#ae81ff>5</span>       [<span style=color:#ae81ff>11</span>]    GETTABLE        <span style=color:#ae81ff>2</span> <span style=color:#ae81ff>0</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>4</span>  ; <span style=color:#e6db74>&#34;new&#34;</span>
-        <span style=color:#ae81ff>6</span>       [<span style=color:#ae81ff>11</span>]    MOVE            <span style=color:#ae81ff>3</span> <span style=color:#ae81ff>1</span>
-        <span style=color:#ae81ff>7</span>       [<span style=color:#ae81ff>11</span>]    CALL            <span style=color:#ae81ff>2</span> <span style=color:#ae81ff>2</span> <span style=color:#ae81ff>2</span>
-        <span style=color:#ae81ff>8</span>       [<span style=color:#ae81ff>13</span>]    GETTABLE        <span style=color:#ae81ff>3</span> <span style=color:#ae81ff>0</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>5</span>  ; <span style=color:#e6db74>&#34;set&#34;</span>
-        <span style=color:#ae81ff>9</span>       [<span style=color:#ae81ff>15</span>]    LOADK           <span style=color:#ae81ff>4</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>6</span>    ; <span style=color:#ae81ff>1</span>
-        <span style=color:#ae81ff>10</span>      [<span style=color:#ae81ff>15</span>]    MOVE            <span style=color:#ae81ff>5</span> <span style=color:#ae81ff>1</span>
-        <span style=color:#ae81ff>11</span>      [<span style=color:#ae81ff>15</span>]    LOADK           <span style=color:#ae81ff>6</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>6</span>    ; <span style=color:#ae81ff>1</span>
-        <span style=color:#ae81ff>12</span>      [<span style=color:#ae81ff>15</span>]    FORPREP         <span style=color:#ae81ff>4</span> <span style=color:#ae81ff>5</span>     ; to <span style=color:#ae81ff>18</span>
-        <span style=color:#ae81ff>13</span>      [<span style=color:#ae81ff>16</span>]    MOVE            <span style=color:#ae81ff>8</span> <span style=color:#ae81ff>3</span>
-        <span style=color:#ae81ff>14</span>      [<span style=color:#ae81ff>16</span>]    MOVE            <span style=color:#ae81ff>9</span> <span style=color:#ae81ff>2</span>
-        <span style=color:#ae81ff>15</span>      [<span style=color:#ae81ff>16</span>]    MOVE            <span style=color:#ae81ff>10</span> <span style=color:#ae81ff>7</span>
-        <span style=color:#ae81ff>16</span>      [<span style=color:#ae81ff>16</span>]    MOVE            <span style=color:#ae81ff>11</span> <span style=color:#ae81ff>7</span>
-        <span style=color:#ae81ff>17</span>      [<span style=color:#ae81ff>16</span>]    CALL            <span style=color:#ae81ff>8</span> <span style=color:#ae81ff>4</span> <span style=color:#ae81ff>1</span>
-        <span style=color:#ae81ff>18</span>      [<span style=color:#ae81ff>15</span>]    FORLOOP         <span style=color:#ae81ff>4</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>6</span>    ; to <span style=color:#ae81ff>13</span>
-        <span style=color:#ae81ff>19</span>      [<span style=color:#ae81ff>17</span>]    RETURN          <span style=color:#ae81ff>0</span> <span style=color:#ae81ff>1</span>
-</code></pre></div><h2 id=复杂场景>复杂场景</h2><blockquote><p>上述的示例只是一个很简单的场景，在实际开发中，往往会比这个更加复杂，例如实体是一个复杂的结构，可能是面向对象（存在元表），管理时也会对实体增删查改。<br>而访问元表、table的创建删除、table的扩容都是较为耗时的操作。</p></blockquote><blockquote><p>800个单位的碰撞测试（未优化过算法，碰撞测试次数在800 * 800 * 0.5 = 320000）。测试场景中只是简单模拟了实体的创建和获取，至于隐藏在实体框架中的耗时并没有包含在测试过程（例如框架的继承需要用到元表、C侧的框架逻辑），因此只是比较了Lua Table和Userdata对于复杂数据的读写耗时。<br>为了快速验证，本次测试只封装了Component读的方法，写的方法还是采用旧的方案</p></blockquote><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-C data-lang=C><span style=color:#66d9ef>static</span> <span style=color:#66d9ef>int</span> <span style=color:#a6e22e>getcomponents</span>(lua_State<span style=color:#f92672>*</span> L)
-{
-    NumArray <span style=color:#f92672>*</span>a <span style=color:#f92672>=</span> checkarray(L);
-    <span style=color:#66d9ef>int</span> index <span style=color:#f92672>=</span> luaL_checkinteger(L,<span style=color:#ae81ff>2</span>) <span style=color:#f92672>-</span> <span style=color:#ae81ff>1</span>;
-    <span style=color:#66d9ef>int</span> entityGroup <span style=color:#f92672>=</span> luaL_checkinteger(L,<span style=color:#ae81ff>3</span>);  <span style=color:#75715e>//实际情况下，需要告知实体管理需要获取哪些Component，这里模拟了参数传入
-</span><span style=color:#75715e></span>
-    <span style=color:#66d9ef>int</span> start <span style=color:#f92672>=</span> index <span style=color:#f92672>*</span> <span style=color:#ae81ff>9</span>;
-    <span style=color:#66d9ef>int</span> end <span style=color:#f92672>=</span> start <span style=color:#f92672>+</span> <span style=color:#ae81ff>9</span> <span style=color:#f92672>-</span> <span style=color:#ae81ff>1</span>;
-
-    luaL_argcheck(L,a <span style=color:#f92672>!=</span> NULL,<span style=color:#ae81ff>1</span>,<span style=color:#e6db74>&#34;&#39;array&#39; expected.&#34;</span>);
-    luaL_argcheck(L,<span style=color:#ae81ff>0</span> <span style=color:#f92672>&lt;=</span> index <span style=color:#f92672>&amp;&amp;</span> end <span style=color:#f92672>&lt;</span> a<span style=color:#f92672>-&gt;</span>size,<span style=color:#ae81ff>2</span>,<span style=color:#e6db74>&#34;index out of range.&#34;</span>);
-
-    <span style=color:#66d9ef>for</span> (size_t i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; i <span style=color:#f92672>&lt;</span> <span style=color:#ae81ff>9</span>; i<span style=color:#f92672>++</span>)
-    {
-        lua_pushnumber(L, a<span style=color:#f92672>-&gt;</span>values[start <span style=color:#f92672>+</span> i]);
-    }
-
-    <span style=color:#66d9ef>return</span> <span style=color:#ae81ff>9</span>;
-}
-</code></pre></div><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Lua data-lang=Lua>
-</code></pre></div><table><thead><tr><th align=center>方案</th><th align=center>create耗时(ms)</th><th align=center>碰撞检测耗时（ms）</th></tr></thead><tbody><tr><td align=center>Table（结构）</td><td align=center>1</td><td align=center>41</td></tr><tr><td align=center>Table（连续内存）</td><td align=center>1</td><td align=center>41</td></tr><tr><td align=center>Component</td><td align=center>1</td><td align=center>31</td></tr></tbody></table><blockquote><p>可以看出来，Lua Table在复杂情况下是比userdata要更耗时的，这也比较好理解，userdata一次性全返回了需要的Component属性，这样子就可以减少函数调用和参数入栈出栈次数，而table不管是结构和连续内存，都需要重复的压入索引或获取返回值，这样OP_SETTABLE和OP_GETTABLE的优势将荡然无存。<br>假设再加上实体框架的逻辑，那么userdata方案将会比table更有优势，因为lua侧只能是用table和metatable来进行管理，而userdata将大量的实体管理逻辑隐藏在C侧。</p></blockquote></div><footer><div class=stats><ul class=categories><li><a class=article-terms-link href=/categories/lua/>lua</a></li></ul><ul class=tags><li><a class=article-terms-link href=/tags/lua/>lua</a></li><li><a class=article-terms-link href=/tags/%e5%8e%9f%e7%90%86/>原理</a></li><li><a class=article-terms-link href=/tags/%e6%80%a7%e8%83%bd%e4%bc%98%e5%8c%96/>性能优化</a></li><li><a class=article-terms-link href=/tags/xlua/>xLua</a></li></ul></div></footer></div></article><div class=pagination><a href=/blog/urp/postprocess_bloom/ class="button left"><span>URP Bloom效果</span></a>
-<a href=/blog/xlua/delegatememoryleak/ class="button right"><span>xlua Delegate 泄漏检查</span></a></div><div class=toc><div class=toc-title><i class="fas fa-bars fa-2x"></i></div><aside class=toc-item><nav id=TableOfContents><ul><li><a href=#环境>环境</a></li><li><a href=#array>Array</a></li><li><a href=#对比>对比</a></li><li><a href=#优化array>优化Array</a></li><li><a href=#分析>分析</a></li><li><a href=#复杂场景>复杂场景</a></li></ul></nav></aside></div></main><section id=site-sidebar><section id=recent-posts><header><h1>最新文章</h1></header><article class=mini-post><a href=/blog/unity3d/optimization/ class=image style="--bg-image: url('https://l-lawliet.github.io/img/2021/09/title/01.jpg')"><img class=stretchH src=https://l-lawliet.github.io/img/2021/09/title/01.jpg alt=Colourful></a><header><h2><a href=/blog/unity3d/optimization/>Unity性能优化技巧汇总</a></h2><time class=published datetime="2025-06-13 00:00:00 +0000 UTC">June 13, 2025</time></header></article><article class=mini-post><a href=/blog/urp/optimize/ class=image style="--bg-image: url('https://l-lawliet.github.io/img/2021/09/title/01.jpg')"><img class=stretchH src=https://l-lawliet.github.io/img/2021/09/title/01.jpg alt=Colourful></a><header><h2><a href=/blog/urp/optimize/>Unity URP 优化技巧</a></h2><time class=published datetime="2025-02-20 00:00:00 +0000 UTC">February 20, 2025</time></header></article><article class=mini-post><a href=/blog/urp/postprocess_bloom/ class=image style="--bg-image: url('https://l-lawliet.github.io/img/2021/09/title/01.jpg')"><img class=stretchH src=https://l-lawliet.github.io/img/2021/09/title/01.jpg alt=Colourful></a><header><h2><a href=/blog/urp/postprocess_bloom/>URP Bloom效果</a></h2><time class=published datetime="2024-03-13 00:00:00 +0000 UTC">March 13, 2024</time></header></article><article class=mini-post><a href=/blog/lua/fulluserdataexperiment/ class=image style="--bg-image: url('https://l-lawliet.github.io/img/2021/09/title/01.jpg')"><img class=stretchH src=https://l-lawliet.github.io/img/2021/09/title/01.jpg alt=Colourful></a><header><h2><a href=/blog/lua/fulluserdataexperiment/>lua fulluserdata代替table的尝试</a></h2><time class=published datetime="2024-02-29 00:00:00 +0000 UTC">February 29, 2024</time></header></article><article class=mini-post><a href=/blog/xlua/delegatememoryleak/ class=image style="--bg-image: url('https://l-lawliet.github.io/img/2021/09/title/01.jpg')"><img class=stretchH src=https://l-lawliet.github.io/img/2021/09/title/01.jpg alt=Colourful></a><header><h2><a href=/blog/xlua/delegatememoryleak/>xlua Delegate 泄漏检查</a></h2><time class=published datetime="2024-02-01 00:00:00 +0000 UTC">February 1, 2024</time></header></article><footer><a href=/blog class=button>查看更多</a></footer></section><section id=categories><header><h1><a href=/categories>分类</a></h1></header><ul><li><a href=/categories/shader/>shader<span class=count>4</span></a><li><a href=/categories/srp/>srp<span class=count>3</span></a><li><a href=/categories/unity3d/>unity3d<span class=count>3</span></a><li><a href=/categories/urp/>urp<span class=count>3</span></a><li><a href=/categories/c/>c#<span class=count>1</span></a><li><a href=/categories/git/>git<span class=count>1</span></a><li><a href=/categories/hlsl/>hlsl<span class=count>1</span></a><li><a href=/categories/hugo/>hugo<span class=count>1</span></a><li><a href=/categories/issue/>issue<span class=count>1</span></a><li><a href=/categories/lua/>lua<span class=count>1</span></a><li><a href=/categories/optimize/>optimize<span class=count>1</span></a><li><a href=/categories/publish/>publish<span class=count>1</span></a><li><a href=/categories/unity/>unity<span class=count>1</span></a><li><a href=/categories/xlua/>xlua<span class=count>1</span></a></li></ul></section><section id=mini-bio><header><h1>关于</h1></header><p>记录游戏开发的点点滴滴</p><footer><a href=/about class=button>详细了解</a></footer></section></section><footer id=site-footer><ul class=socnet-icons><li><a href=//github.com/L-Lawliet target=_blank rel=noopener title=GitHub class="fab fa-github"></a></li><li><a href=//www.zhihu.com/column/UnityDiary target=_blank rel=noopener title=mastodon class="fab fa-zhihu"></a></li><li><a href=mailto:2771918131@qq.com target=_blank title=Email class="far fa-envelope"></a></li></ul><p class=copyright>© 2025 L-Lawliet's Blog<br>主题: <a href=https://themes.gohugo.io/hugo-future-imperfect-slim/ target=_blank rel=noopener>Hugo Future Imperfect Slim</a><br>移植自 <a href=https://html5up.net/future-imperfect target=_blank rel=noopener>HTML5 UP</a> | 由 <a href=https://gohugo.io/ target=_blank rel=noopener title=0.74.2>Hugo</a> 驱动</p></footer><div id=back-to-top><a href=# class="fas fa-arrow-up fa-2x" style=margin:.3em></a></div><script src=/js/highlight.js></script><script>hljs.highlightAll();</script><script src=/js/bundle.min.d95a94746ee88cca446be18568bd56e5c1bc81c9f1b6a580aecfbb9f7e8b9b0d.js integrity="sha256-2VqUdG7ojMpEa+GFaL1W5cG8gcnxtqWArs+7n36Lmw0="></script><script src=/js/add-on.js></script></div></body></html>
+<a href=/en lang=en class="nav no-lang link">English (en)</a></menu><menu id=share-menu class="flyout-menu menu"><h1>Share Post</h1><a href="//twitter.com/share?text=lua%20fulluserdata%e4%bb%a3%e6%9b%bftable%e7%9a%84%e5%b0%9d%e8%af%95&amp;url=https%3a%2f%2fl-lawliet.github.io%2fblog%2flua%2ffulluserdataexperiment%2f" target=_blank rel=noopener class="nav share-btn twitter"><p>Twitter</p></a><a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fl-lawliet.github.io%2fblog%2flua%2ffulluserdataexperiment%2f" target=_blank rel=noopener class="nav share-btn facebook"><p>Facebook</p></a><a href="//www.reddit.com/submit?url=https%3a%2f%2fl-lawliet.github.io%2fblog%2flua%2ffulluserdataexperiment%2f&amp;title=lua%20fulluserdata%e4%bb%a3%e6%9b%bftable%e7%9a%84%e5%b0%9d%e8%af%95" target=_blank rel=noopener class="nav share-btn reddit"><p>Reddit</p></a><a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fl-lawliet.github.io%2fblog%2flua%2ffulluserdataexperiment%2f&amp;title=lua%20fulluserdata%e4%bb%a3%e6%9b%bftable%e7%9a%84%e5%b0%9d%e8%af%95" target=_blank rel=noopener class="nav share-btn linkedin"><p>LinkedIn</p></a><a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fl-lawliet.github.io%2fblog%2flua%2ffulluserdataexperiment%2f&amp;description=lua%20fulluserdata%e4%bb%a3%e6%9b%bftable%e7%9a%84%e5%b0%9d%e8%af%95" target=_blank rel=noopener class="nav share-btn pinterest"><p>Pinterest</p></a><a href="mailto:?subject=%e6%9f%a5%e7%9c%8b%e6%9c%ac%e6%96%87%e7%9a%84%e4%bd%9c%e8%80%85 Lawliet&amp;body=https%3a%2f%2fl-lawliet.github.io%2fblog%2flua%2ffulluserdataexperiment%2f" target=_blank class="nav share-btn email" data-proofer-ignore><p>Email</p></a></menu></header><div id=wrapper><section id=site-intro><a href=/><img src=https://l-lawliet.github.io/img/main/logo.jpg class=circle width=100 alt="Hugo Future Imperfect Slim"></a><header><h1>L-Lawliet's Blog</h1></header><main><p>记录游戏开发的点点滴滴</p></main><footer><ul class=socnet-icons><li><a href=//github.com/L-Lawliet target=_blank rel=noopener title=GitHub class="fab fa-github"></a></li><li><a href=//www.zhihu.com/column/UnityDiary target=_blank rel=noopener title=mastodon class="fab fa-zhihu"></a></li><li><a href=mailto:2771918131@qq.com target=_blank title=Email class="far fa-envelope"></a></li></ul></footer></section><main id=site-main><article><div class=post><header><div class=title><h2><a href=/blog/lua/fulluserdataexperiment/>lua fulluserdata代替table的尝试</a></h2><p>lua fulluserdata代替table的尝试</p></div><div class=meta><time datetime="2024-02-29 00:00:00 +0000 UTC">February 29, 2024</time><p>Lawliet</p></div></header><div id=socnet-share><a href="//twitter.com/share?text=lua%20fulluserdata%e4%bb%a3%e6%9b%bftable%e7%9a%84%e5%b0%9d%e8%af%95&amp;url=https%3a%2f%2fl-lawliet.github.io%2fblog%2flua%2ffulluserdataexperiment%2f" target=_blank rel=noopener class="nav share-btn twitter"><p>Twitter</p></a><a href="//www.facebook.com/sharer/sharer.php?u=https%3a%2f%2fl-lawliet.github.io%2fblog%2flua%2ffulluserdataexperiment%2f" target=_blank rel=noopener class="nav share-btn facebook"><p>Facebook</p></a><a href="//www.reddit.com/submit?url=https%3a%2f%2fl-lawliet.github.io%2fblog%2flua%2ffulluserdataexperiment%2f&amp;title=lua%20fulluserdata%e4%bb%a3%e6%9b%bftable%e7%9a%84%e5%b0%9d%e8%af%95" target=_blank rel=noopener class="nav share-btn reddit"><p>Reddit</p></a><a href="//www.linkedin.com/shareArticle?url=https%3a%2f%2fl-lawliet.github.io%2fblog%2flua%2ffulluserdataexperiment%2f&amp;title=lua%20fulluserdata%e4%bb%a3%e6%9b%bftable%e7%9a%84%e5%b0%9d%e8%af%95" target=_blank rel=noopener class="nav share-btn linkedin"><p>LinkedIn</p></a><a href="//www.pinterest.com/pin/create/button/?url=https%3a%2f%2fl-lawliet.github.io%2fblog%2flua%2ffulluserdataexperiment%2f&amp;description=lua%20fulluserdata%e4%bb%a3%e6%9b%bftable%e7%9a%84%e5%b0%9d%e8%af%95" target=_blank rel=noopener class="nav share-btn pinterest"><p>Pinterest</p></a><a href="mailto:?subject=%e6%9f%a5%e7%9c%8b%e6%9c%ac%e6%96%87%e7%9a%84%e4%bd%9c%e8%80%85 Lawliet&amp;body=https%3a%2f%2fl-lawliet.github.io%2fblog%2flua%2ffulluserdataexperiment%2f" target=_blank class="nav share-btn email" data-proofer-ignore><p>Email</p></a></div><div class=content><a href=/blog/lua/fulluserdataexperiment/ class=image style="--bg-image:url('https://l-lawliet.github.io/img/2021/09/title/01.jpg')"><img class=stretchH src=https://l-lawliet.github.io/img/2021/09/title/01.jpg alt=Colourful></a><p>使用fulluserdata来实现复杂的数据结构，然后尝试替代table，以验证是否可以实现更快的框架（Table的Value为Table时，会有内存不连续的情况，缓存不友好）</p><h2 id=环境>环境</h2><ul><li>xlua版本：2.1.16</li><li>lua版本：5.3.5</li><li>运行环境：Unity Editor</li><li>PC配置：i5 10400F</li></ul><blockquote><p>为了方便测试，所有的测试基于Unity Editor(PC)环境，采用Unity Profiler和Lua Profiler。</p></blockquote><h2 id=array>Array</h2><blockquote><p>以fulluserdata为基础，在C实现了一个Array[double]。</p></blockquote><p><strong>luaarray.h</strong>:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-C data-lang=C><span style=display:flex><span><span style=color:#75715e>#ifndef LUAARRAY_H
+</span></span></span><span style=display:flex><span><span style=color:#75715e>#define LUAARRAY_H
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>
+</span></span><span style=display:flex><span><span style=color:#75715e>#include</span> <span style=color:#75715e>&#34;lua.h&#34;</span><span style=color:#75715e>
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>
+</span></span><span style=display:flex><span><span style=color:#75715e>/*-------------------------------------------------------------------------*\
+</span></span></span><span style=display:flex><span><span style=color:#75715e>* Initializes the library.
+</span></span></span><span style=display:flex><span><span style=color:#75715e>\*-------------------------------------------------------------------------*/</span>
+</span></span><span style=display:flex><span>LUA_API <span style=color:#66d9ef>int</span> <span style=color:#a6e22e>luaopen_array</span>(lua_State <span style=color:#f92672>*</span>L);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e>#endif </span><span style=color:#75715e>/* LUAARRAY_H */</span><span style=color:#75715e>
+</span></span></span></code></pre></div><p><strong>luaarray.c</strong>:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-C data-lang=C><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e>#include</span> <span style=color:#75715e>&#34;luaarray.h&#34;</span><span style=color:#75715e>
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>
+</span></span><span style=display:flex><span><span style=color:#75715e>#define LUA_LIB
+</span></span></span><span style=display:flex><span><span style=color:#75715e>#include</span> <span style=color:#75715e>&#34;lua.h&#34;</span><span style=color:#75715e>
+</span></span></span><span style=display:flex><span><span style=color:#75715e>#include</span> <span style=color:#75715e>&#34;lauxlib.h&#34;</span><span style=color:#75715e>
+</span></span></span><span style=display:flex><span><span style=color:#75715e>#include</span> <span style=color:#75715e>&#34;lualib.h&#34;</span><span style=color:#75715e>
+</span></span></span><span style=display:flex><span><span style=color:#75715e>#include</span> <span style=color:#75715e>&#34;limits.h&#34;</span><span style=color:#75715e>
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>
+</span></span><span style=display:flex><span><span style=color:#75715e>#define ARRAY_TAG &#34;LuaArrayMatetable&#34;
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>typedef</span> <span style=color:#66d9ef>struct</span> NumArray {
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>int</span> size;
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>double</span> values[<span style=color:#ae81ff>1</span>];
+</span></span><span style=display:flex><span>} NumArray;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>static</span> NumArray <span style=color:#f92672>*</span><span style=color:#a6e22e>checkarray</span>(lua_State <span style=color:#f92672>*</span>L)
+</span></span><span style=display:flex><span>{
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>void</span> <span style=color:#f92672>*</span>ud <span style=color:#f92672>=</span> <span style=color:#a6e22e>luaL_checkudata</span>(L, <span style=color:#ae81ff>1</span>, ARRAY_TAG);
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>luaL_argcheck</span>(L, ud <span style=color:#f92672>!=</span> NULL, <span style=color:#ae81ff>1</span>, <span style=color:#e6db74>&#34;&#39;array&#39; expected&#34;</span>);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>return</span> (NumArray <span style=color:#f92672>*</span>)ud;
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>static</span> <span style=color:#66d9ef>double</span> <span style=color:#f92672>*</span><span style=color:#a6e22e>getelement</span>(lua_State <span style=color:#f92672>*</span>L)
+</span></span><span style=display:flex><span>{
+</span></span><span style=display:flex><span>    NumArray <span style=color:#f92672>*</span>a <span style=color:#f92672>=</span> <span style=color:#a6e22e>checkarray</span>(L);
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>int</span> index <span style=color:#f92672>=</span> <span style=color:#a6e22e>luaL_checkinteger</span>(L,<span style=color:#ae81ff>2</span>) <span style=color:#f92672>-</span> <span style=color:#ae81ff>1</span>;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>luaL_argcheck</span>(L,a <span style=color:#f92672>!=</span> NULL,<span style=color:#ae81ff>1</span>,<span style=color:#e6db74>&#34;&#39;array&#39; expected.&#34;</span>);
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>luaL_argcheck</span>(L,<span style=color:#ae81ff>0</span> <span style=color:#f92672>&lt;=</span> index <span style=color:#f92672>&amp;&amp;</span> index <span style=color:#f92672>&lt;</span> a<span style=color:#f92672>-&gt;</span>size,<span style=color:#ae81ff>2</span>,<span style=color:#e6db74>&#34;index out of range.&#34;</span>);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>return</span> <span style=color:#f92672>&amp;</span>a<span style=color:#f92672>-&gt;</span>values[index];
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>static</span> <span style=color:#66d9ef>int</span> <span style=color:#a6e22e>newarray</span>(lua_State<span style=color:#f92672>*</span> L)
+</span></span><span style=display:flex><span>{
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>int</span> i, n;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    n <span style=color:#f92672>=</span> <span style=color:#a6e22e>luaL_checkinteger</span>(L,<span style=color:#ae81ff>1</span>);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>luaL_argcheck</span>(L, n <span style=color:#f92672>&gt;=</span> <span style=color:#ae81ff>1</span>, <span style=color:#ae81ff>1</span>, <span style=color:#e6db74>&#34;invalid size.&#34;</span>);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>size_t</span> nbytes <span style=color:#f92672>=</span> <span style=color:#66d9ef>sizeof</span>(NumArray) <span style=color:#f92672>+</span> (n <span style=color:#f92672>-</span> <span style=color:#ae81ff>1</span>) <span style=color:#f92672>*</span> <span style=color:#66d9ef>sizeof</span>(<span style=color:#66d9ef>double</span>);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    NumArray<span style=color:#f92672>*</span> a <span style=color:#f92672>=</span> (NumArray<span style=color:#f92672>*</span>) <span style=color:#a6e22e>lua_newuserdata</span>(L,nbytes);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    a<span style=color:#f92672>-&gt;</span>size <span style=color:#f92672>=</span> n;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>for</span> (i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; i <span style=color:#f92672>&lt;</span> n <span style=color:#f92672>-</span> <span style=color:#ae81ff>1</span>; <span style=color:#f92672>++</span>i)
+</span></span><span style=display:flex><span>        a<span style=color:#f92672>-&gt;</span>values[i] <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>luaL_getmetatable</span>(L, ARRAY_TAG);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>lua_setmetatable</span>(L, <span style=color:#f92672>-</span><span style=color:#ae81ff>2</span>);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>return</span> <span style=color:#ae81ff>1</span>;
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>static</span> <span style=color:#66d9ef>int</span> <span style=color:#a6e22e>setarray</span>(lua_State<span style=color:#f92672>*</span> L)
+</span></span><span style=display:flex><span>{
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>double</span> value <span style=color:#f92672>=</span> <span style=color:#a6e22e>luaL_checknumber</span>(L, <span style=color:#ae81ff>3</span>);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>*</span><span style=color:#a6e22e>getelement</span>(L) <span style=color:#f92672>=</span> value;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>return</span> <span style=color:#ae81ff>0</span>;
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>static</span> <span style=color:#66d9ef>int</span> <span style=color:#a6e22e>getarray</span>(lua_State<span style=color:#f92672>*</span> L)
+</span></span><span style=display:flex><span>{
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>lua_pushnumber</span>(L, <span style=color:#f92672>*</span><span style=color:#a6e22e>getelement</span>(L));
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>return</span> <span style=color:#ae81ff>1</span>;
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>static</span> <span style=color:#66d9ef>int</span> <span style=color:#a6e22e>getsize</span>(lua_State<span style=color:#f92672>*</span> L)
+</span></span><span style=display:flex><span>{
+</span></span><span style=display:flex><span>    NumArray <span style=color:#f92672>*</span>a <span style=color:#f92672>=</span> <span style=color:#a6e22e>checkarray</span>(L);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>lua_pushnumber</span>(L, a<span style=color:#f92672>-&gt;</span>size);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>return</span> <span style=color:#ae81ff>1</span>;
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>static</span> <span style=color:#66d9ef>int</span> <span style=color:#a6e22e>array2string</span>(lua_State<span style=color:#f92672>*</span> L)
+</span></span><span style=display:flex><span>{
+</span></span><span style=display:flex><span>    NumArray<span style=color:#f92672>*</span> a <span style=color:#f92672>=</span> <span style=color:#a6e22e>checkarray</span>(L);
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>lua_pushfstring</span>(L,<span style=color:#e6db74>&#34;array(%d)&#34;</span>,a<span style=color:#f92672>-&gt;</span>size);
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>return</span> <span style=color:#ae81ff>1</span>;
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>static</span> luaL_Reg arraylib_f [] <span style=color:#f92672>=</span> {
+</span></span><span style=display:flex><span>    {<span style=color:#e6db74>&#34;new&#34;</span>, newarray},
+</span></span><span style=display:flex><span>    {NULL, NULL}
+</span></span><span style=display:flex><span>};
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>static</span> luaL_Reg arraylib_m [] <span style=color:#f92672>=</span> {
+</span></span><span style=display:flex><span>    {<span style=color:#e6db74>&#34;set&#34;</span>, setarray},
+</span></span><span style=display:flex><span>    {<span style=color:#e6db74>&#34;get&#34;</span>, getarray},
+</span></span><span style=display:flex><span>    {<span style=color:#e6db74>&#34;size&#34;</span>, getsize},
+</span></span><span style=display:flex><span>    {<span style=color:#e6db74>&#34;__tostring&#34;</span>, array2string},
+</span></span><span style=display:flex><span>    {NULL, NULL}
+</span></span><span style=display:flex><span>};
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>LUA_API <span style=color:#66d9ef>int</span> <span style=color:#a6e22e>luaopen_array</span>(lua_State<span style=color:#f92672>*</span> L)
+</span></span><span style=display:flex><span>{
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>luaL_newmetatable</span>(L, ARRAY_TAG);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>lua_pushstring</span>(L, <span style=color:#e6db74>&#34;__index&#34;</span>);
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>lua_pushvalue</span>(L, <span style=color:#f92672>-</span><span style=color:#ae81ff>2</span>);
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>lua_settable</span>(L, <span style=color:#f92672>-</span><span style=color:#ae81ff>3</span>);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>luaL_setfuncs</span>(L, arraylib_m, <span style=color:#ae81ff>0</span>);
+</span></span><span style=display:flex><span>    
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>luaL_newlib</span>(L, arraylib_f);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>return</span> <span style=color:#ae81ff>1</span>;
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><h2 id=对比>对比</h2><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Lua data-lang=Lua><span style=display:flex><span><span style=color:#66d9ef>local</span> array <span style=color:#f92672>=</span> require <span style=color:#e6db74>&#34;array&#34;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>local</span> num <span style=color:#f92672>=</span> <span style=color:#ae81ff>1000000</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>function</span> <span style=color:#a6e22e>TestTable</span>()
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>local</span> time <span style=color:#f92672>=</span> os.clock()
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>local</span> tb <span style=color:#f92672>=</span> {}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>local</span> value
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    time <span style=color:#f92672>=</span> os.clock()
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>local</span> insert <span style=color:#f92672>=</span> table.insert
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>for</span> i<span style=color:#f92672>=</span><span style=color:#ae81ff>1</span>,num <span style=color:#66d9ef>do</span>
+</span></span><span style=display:flex><span>        tb[i] <span style=color:#f92672>=</span> i
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>end</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    print(string.format(<span style=color:#e6db74>&#34;set table: %sms&#34;</span>, (os.clock() <span style=color:#f92672>-</span> time) <span style=color:#f92672>*</span> <span style=color:#ae81ff>1000</span>))
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    time <span style=color:#f92672>=</span> os.clock()
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>for</span> i<span style=color:#f92672>=</span><span style=color:#ae81ff>1</span>,num <span style=color:#66d9ef>do</span>
+</span></span><span style=display:flex><span>        value <span style=color:#f92672>=</span> tb[i]
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>end</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    print(string.format(<span style=color:#e6db74>&#34;get table:%sms&#34;</span>, (os.clock() <span style=color:#f92672>-</span> time) <span style=color:#f92672>*</span> <span style=color:#ae81ff>1000</span>))
+</span></span><span style=display:flex><span><span style=color:#66d9ef>end</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>function</span> <span style=color:#a6e22e>TestUserdata</span>()
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>local</span> time <span style=color:#f92672>=</span> os.clock()
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>local</span> arr <span style=color:#f92672>=</span> array.new(num)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>local</span> value
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    time <span style=color:#f92672>=</span> os.clock()
+</span></span><span style=display:flex><span>    
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>for</span> i<span style=color:#f92672>=</span><span style=color:#ae81ff>1</span>,num <span style=color:#66d9ef>do</span>
+</span></span><span style=display:flex><span>        arr:set(i, i)
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>end</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    print(string.format(<span style=color:#e6db74>&#34;set array: %sms&#34;</span>, (os.clock() <span style=color:#f92672>-</span> time) <span style=color:#f92672>*</span> <span style=color:#ae81ff>1000</span>))
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    time <span style=color:#f92672>=</span> os.clock()
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>for</span> i<span style=color:#f92672>=</span><span style=color:#ae81ff>1</span>,num <span style=color:#66d9ef>do</span>
+</span></span><span style=display:flex><span>        value <span style=color:#f92672>=</span> arr:get(i)
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>end</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    print(string.format(<span style=color:#e6db74>&#34;get array:%sms&#34;</span>, (os.clock() <span style=color:#f92672>-</span> time) <span style=color:#f92672>*</span> <span style=color:#ae81ff>1000</span>))
+</span></span><span style=display:flex><span><span style=color:#66d9ef>end</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>print(num) 
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>TestUserdata()
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>TestTable()
+</span></span></code></pre></div><blockquote><p>在完成luaarray.c的实现后，就编写基于两者的对比用例，并且在unity中进行测试。原本以为fulluserdata的实现会比table性能好，最差也是相差无几，但实际情况却出人意料：</p></blockquote><table><thead><tr><th style=text-align:center>方案</th><th style=text-align:center>set耗时(ms)</th><th style=text-align:center>get耗时（ms）</th></tr></thead><tbody><tr><td style=text-align:center>Table</td><td style=text-align:center>24</td><td style=text-align:center>9</td></tr><tr><td style=text-align:center>Array</td><td style=text-align:center>82</td><td style=text-align:center>79</td></tr></tbody></table><h2 id=优化array>优化Array</h2><blockquote><p>从上面对比的情况可以看出，Table远远比Array快，特别在get的情况。在经过一番思考过后，排查出一个问题：那就是Array由于需要区分当前userdata类型，防止意外的内存指针传入导致出问题，所以使用了metatable，所以在调用时，会先判断metatable的情况。以此作为优化目标进行优化：</p></blockquote><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-C data-lang=C><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>static</span> NumArray <span style=color:#f92672>*</span><span style=color:#a6e22e>checkarray</span>(lua_State <span style=color:#f92672>*</span>L)
+</span></span><span style=display:flex><span>{
+</span></span><span style=display:flex><span>    
+</span></span><span style=display:flex><span>    <span style=color:#75715e>// 不再检查matetable 
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    <span style=color:#75715e>//void *ud = luaL_checkudata(L, 1, ARRAY_TAG);
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    <span style=color:#66d9ef>void</span> <span style=color:#f92672>*</span>ud <span style=color:#f92672>=</span> <span style=color:#a6e22e>lua_touserdata</span>(L, <span style=color:#ae81ff>1</span>);
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>luaL_argcheck</span>(L, ud <span style=color:#f92672>!=</span> NULL, <span style=color:#ae81ff>1</span>, <span style=color:#e6db74>&#34;&#39;array&#39; expected&#34;</span>);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>return</span> (NumArray <span style=color:#f92672>*</span>)ud;
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>static</span> <span style=color:#66d9ef>int</span> <span style=color:#a6e22e>newarray</span>(lua_State<span style=color:#f92672>*</span> L)
+</span></span><span style=display:flex><span>{
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>int</span> i, n;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    n <span style=color:#f92672>=</span> <span style=color:#a6e22e>luaL_checkinteger</span>(L,<span style=color:#ae81ff>1</span>);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>luaL_argcheck</span>(L, n <span style=color:#f92672>&gt;=</span> <span style=color:#ae81ff>1</span>, <span style=color:#ae81ff>1</span>, <span style=color:#e6db74>&#34;invalid size.&#34;</span>);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>size_t</span> nbytes <span style=color:#f92672>=</span> <span style=color:#66d9ef>sizeof</span>(NumArray) <span style=color:#f92672>+</span> (n <span style=color:#f92672>-</span> <span style=color:#ae81ff>1</span>) <span style=color:#f92672>*</span> <span style=color:#66d9ef>sizeof</span>(<span style=color:#66d9ef>double</span>);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    NumArray<span style=color:#f92672>*</span> a <span style=color:#f92672>=</span> (NumArray<span style=color:#f92672>*</span>) <span style=color:#a6e22e>lua_newuserdata</span>(L,nbytes);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    a<span style=color:#f92672>-&gt;</span>size <span style=color:#f92672>=</span> n;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>for</span> (i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; i <span style=color:#f92672>&lt;</span> n <span style=color:#f92672>-</span> <span style=color:#ae81ff>1</span>; <span style=color:#f92672>++</span>i)
+</span></span><span style=display:flex><span>        a<span style=color:#f92672>-&gt;</span>values[i] <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#75715e>// 不再设置metatable
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>
+</span></span><span style=display:flex><span>    <span style=color:#75715e>//luaL_getmetatable(L, ARRAY_TAG);
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>
+</span></span><span style=display:flex><span>    <span style=color:#75715e>//lua_setmetatable(L, -2);
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>return</span> <span style=color:#ae81ff>1</span>;
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e>//将function赋值给array
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#66d9ef>static</span> luaL_Reg arraylib_f [] <span style=color:#f92672>=</span> {
+</span></span><span style=display:flex><span>    {<span style=color:#e6db74>&#34;new&#34;</span>, newarray},
+</span></span><span style=display:flex><span>    {<span style=color:#e6db74>&#34;set&#34;</span>, setarray},
+</span></span><span style=display:flex><span>    {<span style=color:#e6db74>&#34;get&#34;</span>, getarray},
+</span></span><span style=display:flex><span>    {<span style=color:#e6db74>&#34;size&#34;</span>, getsize},
+</span></span><span style=display:flex><span>    {<span style=color:#e6db74>&#34;__tostring&#34;</span>, array2string}, <span style=color:#75715e>//print(a)时Lua会调用该元方法。
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    {NULL, NULL}
+</span></span><span style=display:flex><span>};
+</span></span></code></pre></div><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Lua data-lang=Lua><span style=display:flex><span><span style=color:#66d9ef>function</span> <span style=color:#a6e22e>TestUserdata</span>()
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>local</span> time <span style=color:#f92672>=</span> os.clock()
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>local</span> arr <span style=color:#f92672>=</span> array.new(num)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>local</span> value
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    time <span style=color:#f92672>=</span> os.clock()
+</span></span><span style=display:flex><span>    
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>local</span> set <span style=color:#f92672>=</span> array.set <span style=color:#75715e>--改为array的function，并缓存起来</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>for</span> i<span style=color:#f92672>=</span><span style=color:#ae81ff>1</span>,num <span style=color:#66d9ef>do</span>
+</span></span><span style=display:flex><span>        set(arr, i, i)
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>end</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    print(string.format(<span style=color:#e6db74>&#34;set array: %sms&#34;</span>, (os.clock() <span style=color:#f92672>-</span> time) <span style=color:#f92672>*</span> <span style=color:#ae81ff>1000</span>))
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    time <span style=color:#f92672>=</span> os.clock()
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>local</span> get <span style=color:#f92672>=</span> array.get <span style=color:#75715e>--改为array的function，并缓存起来</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>for</span> i<span style=color:#f92672>=</span><span style=color:#ae81ff>1</span>,num <span style=color:#66d9ef>do</span>
+</span></span><span style=display:flex><span>        value <span style=color:#f92672>=</span> get(arr, i)
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>end</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    print(string.format(<span style=color:#e6db74>&#34;get array:%sms&#34;</span>, (os.clock() <span style=color:#f92672>-</span> time) <span style=color:#f92672>*</span> <span style=color:#ae81ff>1000</span>))
+</span></span><span style=display:flex><span><span style=color:#66d9ef>end</span>
+</span></span></code></pre></div><blockquote><p>测试后，耗时有所改善，但仍然不太乐观：</p></blockquote><table><thead><tr><th style=text-align:center>方案</th><th style=text-align:center>set耗时(ms)</th><th style=text-align:center>get耗时（ms）</th></tr></thead><tbody><tr><td style=text-align:center>Table</td><td style=text-align:center>24</td><td style=text-align:center>9</td></tr><tr><td style=text-align:center>Array (no metatable)</td><td style=text-align:center>44</td><td style=text-align:center>38</td></tr></tbody></table><blockquote><p>可以看出，metatable对于代码效率影响巨大。如果需要标记当前的内存指针是否正确，就需要另辟蹊径。</p></blockquote><h2 id=分析>分析</h2><ol><li>首先分析table的get耗时为什么比table的set要高？</li></ol><blockquote><p>这是因为table插入数据时存在扩容的情况。</p></blockquote><ol start=2><li>table的set为什么这么快？</li></ol><blockquote><p>这是有两个原因。<br>一是示例中的table放入的是number值，number值在table的Value中是以连续内存存在的，这是因为TValue是一个联合体，在number的情况下TValue就保存着值，因此内存是连续的，就不存在缓存不友好的情况。<br>二是table[x]在运行时是使用OP_SETTABLE和OP_GETTABLE两个指令。而示例中的array.set则需要使用多次OP_MOVE，最后还要调用OP_CALL，在指令中不占优，并且需要频繁操作寄存器导致耗时较大。</p></blockquote><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Lua data-lang=Lua><span style=display:flex><span><span style=color:#66d9ef>local</span> array <span style=color:#f92672>=</span> require <span style=color:#e6db74>&#34;array&#34;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>local</span> num <span style=color:#f92672>=</span> <span style=color:#ae81ff>1000</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>local</span> a <span style=color:#f92672>=</span> {}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>for</span> i<span style=color:#f92672>=</span><span style=color:#ae81ff>1</span>,num <span style=color:#66d9ef>do</span>
+</span></span><span style=display:flex><span>    a[i] <span style=color:#f92672>=</span> i
+</span></span><span style=display:flex><span><span style=color:#66d9ef>end</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>main <span style=color:#f92672>&lt;</span>table.lua:<span style=color:#ae81ff>0</span>,<span style=color:#ae81ff>0</span><span style=color:#f92672>&gt;</span> (<span style=color:#ae81ff>12</span> instructions at <span style=color:#ae81ff>0000000000028</span>a70)       
+</span></span><span style=display:flex><span><span style=color:#ae81ff>0</span><span style=color:#f92672>+</span> params, <span style=color:#ae81ff>7</span> slots, <span style=color:#ae81ff>1</span> upvalue, <span style=color:#ae81ff>7</span> locals, <span style=color:#ae81ff>4</span> constants, <span style=color:#ae81ff>0</span> functions
+</span></span><span style=display:flex><span>        <span style=color:#ae81ff>1</span>       [<span style=color:#ae81ff>1</span>]     GETTABUP        <span style=color:#ae81ff>0</span> <span style=color:#ae81ff>0</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>1</span>  ; _ENV <span style=color:#e6db74>&#34;require&#34;</span> 
+</span></span><span style=display:flex><span>        <span style=color:#ae81ff>2</span>       [<span style=color:#ae81ff>1</span>]     LOADK           <span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>2</span>    ; <span style=color:#e6db74>&#34;array&#34;</span>        
+</span></span><span style=display:flex><span>        <span style=color:#ae81ff>3</span>       [<span style=color:#ae81ff>1</span>]     CALL            <span style=color:#ae81ff>0</span> <span style=color:#ae81ff>2</span> <span style=color:#ae81ff>2</span>
+</span></span><span style=display:flex><span>        <span style=color:#ae81ff>4</span>       [<span style=color:#ae81ff>3</span>]     LOADK           <span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>3</span>    ; <span style=color:#ae81ff>1000</span>
+</span></span><span style=display:flex><span>        <span style=color:#ae81ff>5</span>       [<span style=color:#ae81ff>5</span>]     NEWTABLE        <span style=color:#ae81ff>2</span> <span style=color:#ae81ff>0</span> <span style=color:#ae81ff>0</span>
+</span></span><span style=display:flex><span>        <span style=color:#ae81ff>6</span>       [<span style=color:#ae81ff>7</span>]     LOADK           <span style=color:#ae81ff>3</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>4</span>    ; <span style=color:#ae81ff>1</span>
+</span></span><span style=display:flex><span>        <span style=color:#ae81ff>7</span>       [<span style=color:#ae81ff>7</span>]     MOVE            <span style=color:#ae81ff>4</span> <span style=color:#ae81ff>1</span>
+</span></span><span style=display:flex><span>        <span style=color:#ae81ff>8</span>       [<span style=color:#ae81ff>7</span>]     LOADK           <span style=color:#ae81ff>5</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>4</span>    ; <span style=color:#ae81ff>1</span>
+</span></span><span style=display:flex><span>        <span style=color:#ae81ff>9</span>       [<span style=color:#ae81ff>7</span>]     FORPREP         <span style=color:#ae81ff>3</span> <span style=color:#ae81ff>1</span>     ; to <span style=color:#ae81ff>11</span>
+</span></span><span style=display:flex><span>        <span style=color:#ae81ff>10</span>      [<span style=color:#ae81ff>8</span>]     SETTABLE        <span style=color:#ae81ff>2</span> <span style=color:#ae81ff>6</span> <span style=color:#ae81ff>6</span>
+</span></span><span style=display:flex><span>        <span style=color:#ae81ff>11</span>      [<span style=color:#ae81ff>7</span>]     FORLOOP         <span style=color:#ae81ff>3</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>2</span>    ; to <span style=color:#ae81ff>10</span>
+</span></span><span style=display:flex><span>        <span style=color:#ae81ff>12</span>      [<span style=color:#ae81ff>9</span>]     RETURN          <span style=color:#ae81ff>0</span> <span style=color:#ae81ff>1</span>
+</span></span></code></pre></div><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Lua data-lang=Lua><span style=display:flex><span><span style=color:#66d9ef>local</span> array <span style=color:#f92672>=</span> require <span style=color:#e6db74>&#34;array&#34;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>local</span> num <span style=color:#f92672>=</span> <span style=color:#ae81ff>1000</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>local</span> arr <span style=color:#f92672>=</span> array.new(num)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>local</span> set <span style=color:#f92672>=</span> array.set
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>for</span> i<span style=color:#f92672>=</span><span style=color:#ae81ff>1</span>,num <span style=color:#66d9ef>do</span>
+</span></span><span style=display:flex><span>    set(arr, i, i)
+</span></span><span style=display:flex><span><span style=color:#66d9ef>end</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>main <span style=color:#f92672>&lt;</span>table.lua:<span style=color:#ae81ff>0</span>,<span style=color:#ae81ff>0</span><span style=color:#f92672>&gt;</span> (<span style=color:#ae81ff>19</span> instructions at <span style=color:#ae81ff>00000000001</span>b8a70)
+</span></span><span style=display:flex><span><span style=color:#ae81ff>0</span><span style=color:#f92672>+</span> params, <span style=color:#ae81ff>12</span> slots, <span style=color:#ae81ff>1</span> upvalue, <span style=color:#ae81ff>8</span> locals, <span style=color:#ae81ff>6</span> constants, <span style=color:#ae81ff>0</span> functions
+</span></span><span style=display:flex><span>        <span style=color:#ae81ff>1</span>       [<span style=color:#ae81ff>1</span>]     GETTABUP        <span style=color:#ae81ff>0</span> <span style=color:#ae81ff>0</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>1</span>  ; _ENV <span style=color:#e6db74>&#34;require&#34;</span>
+</span></span><span style=display:flex><span>        <span style=color:#ae81ff>2</span>       [<span style=color:#ae81ff>1</span>]     LOADK           <span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>2</span>    ; <span style=color:#e6db74>&#34;array&#34;</span>
+</span></span><span style=display:flex><span>        <span style=color:#ae81ff>3</span>       [<span style=color:#ae81ff>1</span>]     CALL            <span style=color:#ae81ff>0</span> <span style=color:#ae81ff>2</span> <span style=color:#ae81ff>2</span>
+</span></span><span style=display:flex><span>        <span style=color:#ae81ff>4</span>       [<span style=color:#ae81ff>3</span>]     LOADK           <span style=color:#ae81ff>1</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>3</span>    ; <span style=color:#ae81ff>1000</span>
+</span></span><span style=display:flex><span>        <span style=color:#ae81ff>5</span>       [<span style=color:#ae81ff>11</span>]    GETTABLE        <span style=color:#ae81ff>2</span> <span style=color:#ae81ff>0</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>4</span>  ; <span style=color:#e6db74>&#34;new&#34;</span>
+</span></span><span style=display:flex><span>        <span style=color:#ae81ff>6</span>       [<span style=color:#ae81ff>11</span>]    MOVE            <span style=color:#ae81ff>3</span> <span style=color:#ae81ff>1</span>
+</span></span><span style=display:flex><span>        <span style=color:#ae81ff>7</span>       [<span style=color:#ae81ff>11</span>]    CALL            <span style=color:#ae81ff>2</span> <span style=color:#ae81ff>2</span> <span style=color:#ae81ff>2</span>
+</span></span><span style=display:flex><span>        <span style=color:#ae81ff>8</span>       [<span style=color:#ae81ff>13</span>]    GETTABLE        <span style=color:#ae81ff>3</span> <span style=color:#ae81ff>0</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>5</span>  ; <span style=color:#e6db74>&#34;set&#34;</span>
+</span></span><span style=display:flex><span>        <span style=color:#ae81ff>9</span>       [<span style=color:#ae81ff>15</span>]    LOADK           <span style=color:#ae81ff>4</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>6</span>    ; <span style=color:#ae81ff>1</span>
+</span></span><span style=display:flex><span>        <span style=color:#ae81ff>10</span>      [<span style=color:#ae81ff>15</span>]    MOVE            <span style=color:#ae81ff>5</span> <span style=color:#ae81ff>1</span>
+</span></span><span style=display:flex><span>        <span style=color:#ae81ff>11</span>      [<span style=color:#ae81ff>15</span>]    LOADK           <span style=color:#ae81ff>6</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>6</span>    ; <span style=color:#ae81ff>1</span>
+</span></span><span style=display:flex><span>        <span style=color:#ae81ff>12</span>      [<span style=color:#ae81ff>15</span>]    FORPREP         <span style=color:#ae81ff>4</span> <span style=color:#ae81ff>5</span>     ; to <span style=color:#ae81ff>18</span>
+</span></span><span style=display:flex><span>        <span style=color:#ae81ff>13</span>      [<span style=color:#ae81ff>16</span>]    MOVE            <span style=color:#ae81ff>8</span> <span style=color:#ae81ff>3</span>
+</span></span><span style=display:flex><span>        <span style=color:#ae81ff>14</span>      [<span style=color:#ae81ff>16</span>]    MOVE            <span style=color:#ae81ff>9</span> <span style=color:#ae81ff>2</span>
+</span></span><span style=display:flex><span>        <span style=color:#ae81ff>15</span>      [<span style=color:#ae81ff>16</span>]    MOVE            <span style=color:#ae81ff>10</span> <span style=color:#ae81ff>7</span>
+</span></span><span style=display:flex><span>        <span style=color:#ae81ff>16</span>      [<span style=color:#ae81ff>16</span>]    MOVE            <span style=color:#ae81ff>11</span> <span style=color:#ae81ff>7</span>
+</span></span><span style=display:flex><span>        <span style=color:#ae81ff>17</span>      [<span style=color:#ae81ff>16</span>]    CALL            <span style=color:#ae81ff>8</span> <span style=color:#ae81ff>4</span> <span style=color:#ae81ff>1</span>
+</span></span><span style=display:flex><span>        <span style=color:#ae81ff>18</span>      [<span style=color:#ae81ff>15</span>]    FORLOOP         <span style=color:#ae81ff>4</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>6</span>    ; to <span style=color:#ae81ff>13</span>
+</span></span><span style=display:flex><span>        <span style=color:#ae81ff>19</span>      [<span style=color:#ae81ff>17</span>]    RETURN          <span style=color:#ae81ff>0</span> <span style=color:#ae81ff>1</span>
+</span></span></code></pre></div><h2 id=复杂场景>复杂场景</h2><blockquote><p>上述的示例只是一个很简单的场景，在实际开发中，往往会比这个更加复杂，例如实体是一个复杂的结构，可能是面向对象（存在元表），管理时也会对实体增删查改。<br>而访问元表、table的创建删除、table的扩容都是较为耗时的操作。</p></blockquote><blockquote><p>800个单位的碰撞测试（未优化过算法，碰撞测试次数在800 * 800 * 0.5 = 320000）。测试场景中只是简单模拟了实体的创建和获取，至于隐藏在实体框架中的耗时并没有包含在测试过程（例如框架的继承需要用到元表、C侧的框架逻辑），因此只是比较了Lua Table和Userdata对于复杂数据的读写耗时。<br>为了快速验证，本次测试只封装了Component读的方法，写的方法还是采用旧的方案</p></blockquote><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-C data-lang=C><span style=display:flex><span><span style=color:#66d9ef>static</span> <span style=color:#66d9ef>int</span> <span style=color:#a6e22e>getcomponents</span>(lua_State<span style=color:#f92672>*</span> L)
+</span></span><span style=display:flex><span>{
+</span></span><span style=display:flex><span>    NumArray <span style=color:#f92672>*</span>a <span style=color:#f92672>=</span> <span style=color:#a6e22e>checkarray</span>(L);
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>int</span> index <span style=color:#f92672>=</span> <span style=color:#a6e22e>luaL_checkinteger</span>(L,<span style=color:#ae81ff>2</span>) <span style=color:#f92672>-</span> <span style=color:#ae81ff>1</span>;
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>int</span> entityGroup <span style=color:#f92672>=</span> <span style=color:#a6e22e>luaL_checkinteger</span>(L,<span style=color:#ae81ff>3</span>);  <span style=color:#75715e>//实际情况下，需要告知实体管理需要获取哪些Component，这里模拟了参数传入
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>int</span> start <span style=color:#f92672>=</span> index <span style=color:#f92672>*</span> <span style=color:#ae81ff>9</span>;
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>int</span> end <span style=color:#f92672>=</span> start <span style=color:#f92672>+</span> <span style=color:#ae81ff>9</span> <span style=color:#f92672>-</span> <span style=color:#ae81ff>1</span>;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>luaL_argcheck</span>(L,a <span style=color:#f92672>!=</span> NULL,<span style=color:#ae81ff>1</span>,<span style=color:#e6db74>&#34;&#39;array&#39; expected.&#34;</span>);
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>luaL_argcheck</span>(L,<span style=color:#ae81ff>0</span> <span style=color:#f92672>&lt;=</span> index <span style=color:#f92672>&amp;&amp;</span> end <span style=color:#f92672>&lt;</span> a<span style=color:#f92672>-&gt;</span>size,<span style=color:#ae81ff>2</span>,<span style=color:#e6db74>&#34;index out of range.&#34;</span>);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>for</span> (<span style=color:#66d9ef>size_t</span> i <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; i <span style=color:#f92672>&lt;</span> <span style=color:#ae81ff>9</span>; i<span style=color:#f92672>++</span>)
+</span></span><span style=display:flex><span>    {
+</span></span><span style=display:flex><span>        <span style=color:#a6e22e>lua_pushnumber</span>(L, a<span style=color:#f92672>-&gt;</span>values[start <span style=color:#f92672>+</span> i]);
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>return</span> <span style=color:#ae81ff>9</span>;
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Lua data-lang=Lua></code></pre></div><table><thead><tr><th style=text-align:center>方案</th><th style=text-align:center>create耗时(ms)</th><th style=text-align:center>碰撞检测耗时（ms）</th></tr></thead><tbody><tr><td style=text-align:center>Table（结构）</td><td style=text-align:center>1</td><td style=text-align:center>41</td></tr><tr><td style=text-align:center>Table（连续内存）</td><td style=text-align:center>1</td><td style=text-align:center>41</td></tr><tr><td style=text-align:center>Component</td><td style=text-align:center>1</td><td style=text-align:center>31</td></tr></tbody></table><blockquote><p>可以看出来，Lua Table在复杂情况下是比userdata要更耗时的，这也比较好理解，userdata一次性全返回了需要的Component属性，这样子就可以减少函数调用和参数入栈出栈次数，而table不管是结构和连续内存，都需要重复的压入索引或获取返回值，这样OP_SETTABLE和OP_GETTABLE的优势将荡然无存。<br>假设再加上实体框架的逻辑，那么userdata方案将会比table更有优势，因为lua侧只能是用table和metatable来进行管理，而userdata将大量的实体管理逻辑隐藏在C侧。</p></blockquote></div><footer><div class=stats><ul class=categories><li><a class=article-terms-link href=/categories/lua/>lua</a></li></ul><ul class=tags><li><a class=article-terms-link href=/tags/lua/>lua</a></li><li><a class=article-terms-link href=/tags/%e5%8e%9f%e7%90%86/>原理</a></li><li><a class=article-terms-link href=/tags/%e6%80%a7%e8%83%bd%e4%bc%98%e5%8c%96/>性能优化</a></li><li><a class=article-terms-link href=/tags/xlua/>xLua</a></li></ul></div></footer></div></article><div class=pagination><a href=/blog/urp/postprocess_bloom/ class="button left"><span>URP Bloom效果</span></a>
+<a href=/blog/xlua/delegatememoryleak/ class="button right"><span>xlua Delegate 泄漏检查</span></a></div><div class=toc><div class=toc-title><i class="fas fa-bars fa-2x"></i></div><aside class=toc-item><nav id=TableOfContents><ul><li><a href=#环境>环境</a></li><li><a href=#array>Array</a></li><li><a href=#对比>对比</a></li><li><a href=#优化array>优化Array</a></li><li><a href=#分析>分析</a></li><li><a href=#复杂场景>复杂场景</a></li></ul></nav></aside></div></main><section id=site-sidebar><section id=recent-posts><header><h1>最新文章</h1></header><article class=mini-post><a href=/blog/unity3d/optimization/ class=image style="--bg-image:url('https://l-lawliet.github.io/img/2021/09/title/01.jpg')"><img class=stretchH src=https://l-lawliet.github.io/img/2021/09/title/01.jpg alt=Colourful></a><header><h2><a href=/blog/unity3d/optimization/>Unity性能优化技巧汇总</a></h2><time class=published datetime="2025-06-13 00:00:00 +0000 UTC">June 13, 2025</time></header></article><article class=mini-post><a href=/blog/urp/optimize/ class=image style="--bg-image:url('https://l-lawliet.github.io/img/2021/09/title/01.jpg')"><img class=stretchH src=https://l-lawliet.github.io/img/2021/09/title/01.jpg alt=Colourful></a><header><h2><a href=/blog/urp/optimize/>Unity URP 优化技巧</a></h2><time class=published datetime="2025-02-20 00:00:00 +0000 UTC">February 20, 2025</time></header></article><article class=mini-post><a href=/blog/urp/postprocess_bloom/ class=image style="--bg-image:url('https://l-lawliet.github.io/img/2021/09/title/01.jpg')"><img class=stretchH src=https://l-lawliet.github.io/img/2021/09/title/01.jpg alt=Colourful></a><header><h2><a href=/blog/urp/postprocess_bloom/>URP Bloom效果</a></h2><time class=published datetime="2024-03-13 00:00:00 +0000 UTC">March 13, 2024</time></header></article><article class=mini-post><a href=/blog/lua/fulluserdataexperiment/ class=image style="--bg-image:url('https://l-lawliet.github.io/img/2021/09/title/01.jpg')"><img class=stretchH src=https://l-lawliet.github.io/img/2021/09/title/01.jpg alt=Colourful></a><header><h2><a href=/blog/lua/fulluserdataexperiment/>lua fulluserdata代替table的尝试</a></h2><time class=published datetime="2024-02-29 00:00:00 +0000 UTC">February 29, 2024</time></header></article><article class=mini-post><a href=/blog/xlua/delegatememoryleak/ class=image style="--bg-image:url('https://l-lawliet.github.io/img/2021/09/title/01.jpg')"><img class=stretchH src=https://l-lawliet.github.io/img/2021/09/title/01.jpg alt=Colourful></a><header><h2><a href=/blog/xlua/delegatememoryleak/>xlua Delegate 泄漏检查</a></h2><time class=published datetime="2024-02-01 00:00:00 +0000 UTC">February 1, 2024</time></header></article><footer><a href=/blog class=button>查看更多</a></footer></section><section id=categories><header><h1><a href=/categories>分类</a></h1></header><ul><li><a href=/categories/shader/>shader<span class=count>4</span></a><li><a href=/categories/srp/>srp<span class=count>3</span></a><li><a href=/categories/unity3d/>unity3d<span class=count>3</span></a><li><a href=/categories/urp/>urp<span class=count>3</span></a><li><a href=/categories/c/>c#<span class=count>1</span></a><li><a href=/categories/git/>git<span class=count>1</span></a><li><a href=/categories/hlsl/>hlsl<span class=count>1</span></a><li><a href=/categories/hugo/>hugo<span class=count>1</span></a><li><a href=/categories/issue/>issue<span class=count>1</span></a><li><a href=/categories/lua/>lua<span class=count>1</span></a><li><a href=/categories/optimize/>optimize<span class=count>1</span></a><li><a href=/categories/publish/>publish<span class=count>1</span></a><li><a href=/categories/unity/>unity<span class=count>1</span></a><li><a href=/categories/xlua/>xlua<span class=count>1</span></a></li></ul></section><section id=mini-bio><header><h1>关于</h1></header><p>记录游戏开发的点点滴滴</p><footer><a href=/about class=button>详细了解</a></footer></section></section><footer id=site-footer><ul class=socnet-icons><li><a href=//github.com/L-Lawliet target=_blank rel=noopener title=GitHub class="fab fa-github"></a></li><li><a href=//www.zhihu.com/column/UnityDiary target=_blank rel=noopener title=mastodon class="fab fa-zhihu"></a></li><li><a href=mailto:2771918131@qq.com target=_blank title=Email class="far fa-envelope"></a></li></ul><p class=copyright>© 2025 Lawliet<br>主题: <a href=https://themes.gohugo.io/hugo-future-imperfect-slim/ target=_blank rel=noopener>Hugo Future Imperfect Slim</a><br>移植自 <a href=https://html5up.net/future-imperfect target=_blank rel=noopener>HTML5 UP</a> | 由 <a href=https://gohugo.io/ target=_blank rel=noopener title=0.123.0>Hugo</a> 驱动</p></footer><div id=back-to-top><a href=# class="fas fa-arrow-up fa-2x" style=margin:.3em></a></div><script src=/js/highlight.js></script><script>hljs.highlightAll()</script><script src=/js/bundle.min.eb0ea17a4e466aecb46ab7eb91629704a76af4561dc6b12f55bf4a0ce072ee3d.js integrity="sha256-6w6hek5Gauy0arfrkWKXBKdq9FYdxrEvVb9KDOBy7j0="></script><script src=/js/add-on.js></script></div></body></html>
