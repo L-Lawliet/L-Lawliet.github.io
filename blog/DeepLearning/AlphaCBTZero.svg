@@ -1,0 +1,509 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 2200">
+  <defs>
+    <marker id="a0" markerWidth="9" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0,9 3,0 6" fill="#475569"/>
+    </marker>
+    <marker id="ab" markerWidth="9" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0,9 3,0 6" fill="#2563eb"/>
+    </marker>
+    <marker id="ag" markerWidth="9" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0,9 3,0 6" fill="#16a34a"/>
+    </marker>
+    <marker id="ao" markerWidth="9" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0,9 3,0 6" fill="#d97706"/>
+    </marker>
+    <marker id="ar" markerWidth="9" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0,9 3,0 6" fill="#dc2626"/>
+    </marker>
+    <marker id="ap" markerWidth="9" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0,9 3,0 6" fill="#9333ea"/>
+    </marker>
+    <marker id="at" markerWidth="9" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0,9 3,0 6" fill="#0f766e"/>
+    </marker>
+    <marker id="aw" markerWidth="9" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0,9 3,0 6" fill="#ffffff"/>
+    </marker>
+    <filter id="sh">
+      <feDropShadow dx="1" dy="2" stdDeviation="2.5" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+
+  <!-- 全局背景 -->
+  <rect width="1100" height="2200" fill="#f1f5f9" rx="0"/>
+
+  <!-- ══════════════════ 标题 ══════════════════ -->
+  <rect x="0" y="0" width="1100" height="56" fill="#0f172a"/>
+  <text x="550" y="24" text-anchor="middle" font-size="17" font-weight="bold" fill="white" font-family="Arial">AlphaCTBZero · 完整系统流程图</text>
+  <text x="550" y="46" text-anchor="middle" font-size="11" fill="#64748b" font-family="Arial">双网络架构 | TrueSkill客观基准 | 配置表快照自动检测 | LoRA复用 | 占位冷启动</text>
+
+  <!-- ══════════════════ STAGE 0: 启动触发 ══════════════════ -->
+  <rect x="10" y="65" width="90" height="18" rx="5" fill="#334155"/>
+  <text x="55" y="78" text-anchor="middle" font-size="9" font-weight="bold" fill="white" font-family="Arial">STAGE 0</text>
+
+  <rect x="10" y="87" width="1080" height="100" rx="10" fill="#1e293b" filter="url(#sh)"/>
+
+  <!-- 触发框 -->
+  <rect x="30" y="99" width="200" height="76" rx="8" fill="#334155" stroke="#64748b" stroke-width="1.5"/>
+  <text x="130" y="120" text-anchor="middle" font-size="12" font-weight="bold" fill="white" font-family="Arial">⚡ 触发条件</text>
+  <text x="130" y="140" text-anchor="middle" font-size="10" fill="#94a3b8" font-family="Arial">① 首次运行</text>
+  <text x="130" y="156" text-anchor="middle" font-size="10" fill="#94a3b8" font-family="Arial">② card_values.json 文件变更</text>
+  <text x="130" y="170" text-anchor="middle" font-size="10" fill="#94a3b8" font-family="Arial">③ 手动触发重训练</text>
+
+  <!-- 读取配置表 -->
+  <rect x="270" y="99" width="200" height="76" rx="8" fill="#1e40af" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="370" y="120" text-anchor="middle" font-size="12" font-weight="bold" fill="white" font-family="Arial">📄 读取配置表</text>
+  <text x="370" y="140" text-anchor="middle" font-size="10" fill="#bfdbfe" font-family="Arial">card_values_current.json</text>
+  <text x="370" y="156" text-anchor="middle" font-size="10" fill="#bfdbfe" font-family="Arial">包含：卡牌属性 + active_mask</text>
+  <text x="370" y="170" text-anchor="middle" font-size="10" fill="#93c5fd" font-family="Arial">（占位卡 mask=0，激活卡 mask=1）</text>
+
+  <!-- 读取快照 -->
+  <rect x="510" y="99" width="220" height="76" rx="8" fill="#0f766e" stroke="#14b8a6" stroke-width="1.5"/>
+  <text x="620" y="120" text-anchor="middle" font-size="12" font-weight="bold" fill="white" font-family="Arial">🗂 读取历史快照</text>
+  <text x="620" y="140" text-anchor="middle" font-size="10" fill="#99f6e4" font-family="Arial">card_values_snapshot.json</text>
+  <text x="620" y="156" text-anchor="middle" font-size="10" fill="#99f6e4" font-family="Arial">上一次训练完成时存档</text>
+  <text x="620" y="170" text-anchor="middle" font-size="10" fill="#5eead4" font-family="Arial">若不存在 → 走「首次训练」分支</text>
+
+  <!-- diff分析 -->
+  <rect x="770" y="99" width="300" height="76" rx="8" fill="#7c3aed" stroke="#a78bfa" stroke-width="1.5"/>
+  <text x="920" y="120" text-anchor="middle" font-size="12" font-weight="bold" fill="white" font-family="Arial">🔍 配置表 Diff 分析</text>
+  <text x="920" y="140" text-anchor="middle" font-size="10" fill="#e9d5ff" font-family="Arial">逐卡对比：mask 变化 + 属性变化量</text>
+  <text x="920" y="156" text-anchor="middle" font-size="10" fill="#e9d5ff" font-family="Arial">占位启用：mask 0→1</text>
+  <text x="920" y="170" text-anchor="middle" font-size="10" fill="#e9d5ff" font-family="Arial">数值变化：z-score = ‖Δf / σ‖₂</text>
+
+  <line x1="230" y1="137" x2="265" y2="137" stroke="#64748b" stroke-width="1.5" marker-end="url(#a0)"/>
+  <line x1="470" y1="137" x2="505" y2="137" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#ab)"/>
+  <line x1="730" y1="137" x2="765" y2="137" stroke="#14b8a6" stroke-width="1.5" marker-end="url(#at)"/>
+
+  <!-- ══════════════════ STAGE 1: 变更判定 ══════════════════ -->
+  <rect x="10" y="198" width="90" height="18" rx="5" fill="#334155"/>
+  <text x="55" y="211" text-anchor="middle" font-size="9" font-weight="bold" fill="white" font-family="Arial">STAGE 1</text>
+
+  <rect x="10" y="220" width="1080" height="200" rx="10" fill="#fff" stroke="#e2e8f0" stroke-width="1.5" filter="url(#sh)"/>
+  <text x="550" y="244" text-anchor="middle" font-size="13" font-weight="bold" fill="#0f172a" font-family="Arial">变更类型判定 · 自动路由</text>
+
+  <!-- 判定菱形 -->
+  <polygon points="550,260 620,295 550,330 480,295" fill="#fef9c3" stroke="#ca8a04" stroke-width="2.5"/>
+  <text x="550" y="291" text-anchor="middle" font-size="10" font-weight="bold" fill="#78350f" font-family="Arial">Diff</text>
+  <text x="550" y="305" text-anchor="middle" font-size="10" font-weight="bold" fill="#78350f" font-family="Arial">结果</text>
+
+  <!-- 四条分支 -->
+  <!-- 分支1: 首次/无快照 (左上) -->
+  <line x1="480" y1="295" x2="170" y2="295" stroke="#475569" stroke-width="1.5"/>
+  <line x1="170" y1="295" x2="170" y2="340" stroke="#475569" stroke-width="1.5" marker-end="url(#a0)"/>
+  <text x="325" y="288" text-anchor="middle" font-size="9" fill="#64748b" font-family="Arial">无快照</text>
+
+  <rect x="80" y="340" width="180" height="64" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
+  <text x="170" y="362" text-anchor="middle" font-size="11" font-weight="bold" fill="white" font-family="Arial">🆕 首次训练</text>
+  <text x="170" y="378" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="Arial">全量候选池初始化</text>
+  <text x="170" y="392" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="Arial">从零开始ELO评估</text>
+
+  <!-- 分支2: 无变化 (左) -->
+  <line x1="480" y1="295" x2="340" y2="295" stroke="#16a34a" stroke-width="1.5"/>
+  <line x1="340" y1="295" x2="340" y2="340" stroke="#16a34a" stroke-width="1.5" marker-end="url(#ag)"/>
+  <text x="410" y="288" text-anchor="middle" font-size="9" fill="#16a34a" font-family="Arial">完全一致</text>
+
+  <rect x="255" y="340" width="170" height="64" rx="8" fill="#14532d" stroke="#16a34a" stroke-width="1.5"/>
+  <text x="340" y="362" text-anchor="middle" font-size="11" font-weight="bold" fill="white" font-family="Arial">✅ 无需处理</text>
+  <text x="340" y="378" text-anchor="middle" font-size="9" fill="#86efac" font-family="Arial">模型权重直接复用</text>
+  <text x="340" y="392" text-anchor="middle" font-size="9" fill="#86efac" font-family="Arial">直接进入训练循环</text>
+
+  <!-- 分支3: 数值微调 (右) -->
+  <line x1="620" y1="295" x2="730" y2="295" stroke="#d97706" stroke-width="1.5"/>
+  <line x1="730" y1="295" x2="730" y2="340" stroke="#d97706" stroke-width="1.5" marker-end="url(#ao)"/>
+  <text x="675" y="288" text-anchor="middle" font-size="9" fill="#d97706" font-family="Arial">数值变化</text>
+
+  <rect x="645" y="340" width="170" height="64" rx="8" fill="#78350f" stroke="#d97706" stroke-width="1.5"/>
+  <text x="730" y="360" text-anchor="middle" font-size="11" font-weight="bold" fill="white" font-family="Arial">🔧 数值微调</text>
+  <text x="730" y="376" text-anchor="middle" font-size="9" fill="#fcd34d" font-family="Arial">z-score分级: A/B/C</text>
+  <text x="730" y="392" text-anchor="middle" font-size="9" fill="#fcd34d" font-family="Arial">LoRA冻结复用</text>
+
+  <!-- 分支4: 占位启用 (右上) -->
+  <line x1="620" y1="295" x2="920" y2="295" stroke="#dc2626" stroke-width="1.5"/>
+  <line x1="920" y1="295" x2="920" y2="340" stroke="#dc2626" stroke-width="1.5" marker-end="url(#ar)"/>
+  <text x="770" y="288" text-anchor="middle" font-size="9" fill="#dc2626" font-family="Arial">mask 0→1</text>
+
+  <rect x="835" y="340" width="170" height="64" rx="8" fill="#7f1d1d" stroke="#dc2626" stroke-width="1.5"/>
+  <text x="920" y="360" text-anchor="middle" font-size="11" font-weight="bold" fill="white" font-family="Arial">🆕 占位启用</text>
+  <text x="920" y="376" text-anchor="middle" font-size="9" fill="#fca5a5" font-family="Arial">KNN先验初始化</text>
+  <text x="920" y="392" text-anchor="middle" font-size="9" fill="#fca5a5" font-family="Arial">嵌入热启动</text>
+
+  <!-- ══════════════════ STAGE 2: 准备阶段 ══════════════════ -->
+  <rect x="10" y="415" width="90" height="18" rx="5" fill="#334155"/>
+  <text x="55" y="428" text-anchor="middle" font-size="9" font-weight="bold" fill="white" font-family="Arial">STAGE 2</text>
+
+  <rect x="10" y="437" width="1080" height="200" rx="10" fill="#fff" stroke="#e2e8f0" stroke-width="1.5" filter="url(#sh)"/>
+  <text x="550" y="458" text-anchor="middle" font-size="13" font-weight="bold" fill="#0f172a" font-family="Arial">各路径准备操作</text>
+
+  <!-- 准备路径1: 数值微调准备 -->
+  <rect x="30" y="466" width="490" height="155" rx="10" fill="#fff7ed" stroke="#d97706" stroke-width="2"/>
+  <text x="275" y="488" text-anchor="middle" font-size="11" font-weight="bold" fill="#92400e" font-family="Arial">数值微调准备（按 z-score 分三档）</text>
+
+  <rect x="42" y="496" width="140" height="112" rx="7" fill="#fef3c7" stroke="#fbbf24" stroke-width="1"/>
+  <text x="112" y="514" text-anchor="middle" font-size="10" font-weight="bold" fill="#78350f" font-family="Arial">路径A  z&lt;0.05</text>
+  <text x="112" y="530" text-anchor="middle" font-size="9" fill="#92400e" font-family="Arial">ELO ~300场</text>
+  <text x="112" y="546" text-anchor="middle" font-size="9" fill="#92400e" font-family="Arial">网络直接复用</text>
+  <text x="112" y="562" text-anchor="middle" font-size="9" fill="#92400e" font-family="Arial">无需训练</text>
+  <text x="112" y="580" text-anchor="middle" font-size="9" font-weight="bold" fill="#d97706" font-family="Arial">&lt;10min</text>
+  <text x="112" y="596" text-anchor="middle" font-size="8" fill="#6b7280" font-family="Arial">微平衡调整</text>
+
+  <rect x="192" y="496" width="150" height="112" rx="7" fill="#fef3c7" stroke="#fbbf24" stroke-width="1"/>
+  <text x="267" y="514" text-anchor="middle" font-size="10" font-weight="bold" fill="#78350f" font-family="Arial">路径B  0.05~0.2</text>
+  <text x="267" y="530" text-anchor="middle" font-size="9" fill="#92400e" font-family="Arial">ELO ~2000场</text>
+  <text x="267" y="546" text-anchor="middle" font-size="9" fill="#92400e" font-family="Arial">LoRA微调</text>
+  <text x="267" y="562" text-anchor="middle" font-size="9" fill="#92400e" font-family="Arial">W'=W+αBA</text>
+  <text x="267" y="578" text-anchor="middle" font-size="9" fill="#92400e" font-family="Arial">参数减少94%</text>
+  <text x="267" y="596" text-anchor="middle" font-size="9" font-weight="bold" fill="#d97706" font-family="Arial">30~60min</text>
+
+  <rect x="352" y="496" width="154" height="112" rx="7" fill="#fef3c7" stroke="#fbbf24" stroke-width="1"/>
+  <text x="429" y="514" text-anchor="middle" font-size="10" font-weight="bold" fill="#78350f" font-family="Arial">路径C  z&gt;0.2</text>
+  <text x="429" y="530" text-anchor="middle" font-size="9" fill="#92400e" font-family="Arial">ELO ~10000场</text>
+  <text x="429" y="546" text-anchor="middle" font-size="9" fill="#92400e" font-family="Arial">底层冻结</text>
+  <text x="429" y="562" text-anchor="middle" font-size="9" fill="#92400e" font-family="Arial">上层FC重训</text>
+  <text x="429" y="578" text-anchor="middle" font-size="9" fill="#92400e" font-family="Arial">知识蒸馏防遗忘</text>
+  <text x="429" y="596" text-anchor="middle" font-size="9" font-weight="bold" fill="#d97706" font-family="Arial">2~4h</text>
+
+  <!-- 准备路径2: 占位启用准备 -->
+  <rect x="540" y="466" width="540" height="155" rx="10" fill="#fff1f2" stroke="#dc2626" stroke-width="2"/>
+  <text x="810" y="488" text-anchor="middle" font-size="11" font-weight="bold" fill="#b91c1c" font-family="Arial">占位启用准备（冷启动三步走）</text>
+
+  <rect x="552" y="496" width="158" height="112" rx="7" fill="#fee2e2" stroke="#f87171" stroke-width="1"/>
+  <text x="631" y="514" text-anchor="middle" font-size="10" font-weight="bold" fill="#7f1d1d" font-family="Arial">① KNN先验</text>
+  <text x="631" y="530" text-anchor="middle" font-size="9" fill="#7f1d1d" font-family="Arial">找K=5相似卡</text>
+  <text x="631" y="546" text-anchor="middle" font-size="9" fill="#7f1d1d" font-family="Arial">加权ELO先验μ₀</text>
+  <text x="631" y="562" text-anchor="middle" font-size="9" fill="#7f1d1d" font-family="Arial">ZeroShot预测器</text>
+  <text x="631" y="578" text-anchor="middle" font-size="9" fill="#7f1d1d" font-family="Arial">新组合优先队列</text>
+  <text x="631" y="596" text-anchor="middle" font-size="8" fill="#6b7280" font-family="Arial">&lt;1min 无需对战</text>
+
+  <rect x="720" y="496" width="170" height="112" rx="7" fill="#fee2e2" stroke="#f87171" stroke-width="1"/>
+  <text x="805" y="514" text-anchor="middle" font-size="10" font-weight="bold" fill="#7f1d1d" font-family="Arial">② 二分定位赛</text>
+  <text x="805" y="530" text-anchor="middle" font-size="9" fill="#7f1d1d" font-family="Arial">log₂(ELO区间)场</text>
+  <text x="805" y="546" text-anchor="middle" font-size="9" fill="#7f1d1d" font-family="Arial">≈12场精确定位</text>
+  <text x="805" y="562" text-anchor="middle" font-size="9" fill="#7f1d1d" font-family="Arial">再精化~20场</text>
+  <text x="805" y="578" text-anchor="middle" font-size="9" fill="#7f1d1d" font-family="Arial">合计≈4080场</text>
+  <text x="805" y="596" text-anchor="middle" font-size="8" fill="#6b7280" font-family="Arial">vs随机63750场</text>
+
+  <rect x="900" y="496" width="168" height="112" rx="7" fill="#fee2e2" stroke="#f87171" stroke-width="1"/>
+  <text x="984" y="514" text-anchor="middle" font-size="10" font-weight="bold" fill="#7f1d1d" font-family="Arial">③ 嵌入热启动</text>
+  <text x="984" y="530" text-anchor="middle" font-size="9" fill="#7f1d1d" font-family="Arial">KNN嵌入插值</text>
+  <text x="984" y="546" text-anchor="middle" font-size="9" fill="#7f1d1d" font-family="Arial">emb_X=Σsim·emb</text>
+  <text x="984" y="562" text-anchor="middle" font-size="9" fill="#7f1d1d" font-family="Arial">渐进激活3轮</text>
+  <text x="984" y="578" text-anchor="middle" font-size="9" fill="#7f1d1d" font-family="Arial">W_X从0→有效</text>
+  <text x="984" y="596" text-anchor="middle" font-size="8" fill="#6b7280" font-family="Arial">~40min</text>
+
+  <!-- 合流箭头 -->
+  <line x1="275" y1="621" x2="275" y2="642" stroke="#d97706" stroke-width="2" marker-end="url(#ao)"/>
+  <line x1="810" y1="621" x2="810" y2="642" stroke="#dc2626" stroke-width="2" marker-end="url(#ar)"/>
+  <line x1="170" y1="404" x2="170" y2="456" stroke="#475569" stroke-width="1.5"/>
+  <line x1="170" y1="456" x2="550" y2="456" stroke="#475569" stroke-width="1.5"/>
+  <line x1="550" y1="456" x2="550" y2="642" stroke="#475569" stroke-width="1.5" marker-end="url(#a0)"/>
+  <line x1="340" y1="404" x2="340" y2="448" stroke="#16a34a" stroke-width="1.5"/>
+  <line x1="340" y1="448" x2="550" y2="448" stroke="#16a34a" stroke-width="1.5"/>
+
+  <!-- 合流点 -->
+  <rect x="430" y="642" width="240" height="36" rx="8" fill="#0f172a" stroke="#475569" stroke-width="2"/>
+  <text x="550" y="665" text-anchor="middle" font-size="12" font-weight="bold" fill="white" font-family="Arial">训练就绪 · 进入训练循环</text>
+
+  <line x1="550" y1="678" x2="550" y2="700" stroke="#475569" stroke-width="2" marker-end="url(#a0)"/>
+
+  <!-- ══════════════════ STAGE 3: 训练循环 ══════════════════ -->
+  <rect x="10" y="690" width="90" height="18" rx="5" fill="#0369a1"/>
+  <text x="55" y="703" text-anchor="middle" font-size="9" font-weight="bold" fill="white" font-family="Arial">STAGE 3</text>
+
+  <rect x="10" y="712" width="1080" height="980" rx="10" fill="#f0f9ff" stroke="#0284c7" stroke-width="2" filter="url(#sh)"/>
+  <text x="550" y="736" text-anchor="middle" font-size="14" font-weight="bold" fill="#0369a1" font-family="Arial">训练核心循环</text>
+
+  <!-- ─── Phase 1: TrueSkill ─── -->
+  <rect x="26" y="746" width="1048" height="195" rx="10" fill="#fff" stroke="#0891b2" stroke-width="2" filter="url(#sh)"/>
+  <rect x="26" y="746" width="160" height="24" rx="6" fill="#0891b2"/>
+  <text x="106" y="762" text-anchor="middle" font-size="10" font-weight="bold" fill="white" font-family="Arial">Phase 1 · TrueSkill 分级竞技场</text>
+
+  <rect x="40" y="778" width="165" height="148" rx="8" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.5"/>
+  <text x="122" y="798" text-anchor="middle" font-size="10" font-weight="bold" fill="#0369a1" font-family="Arial">① 规则预筛</text>
+  <text x="122" y="814" text-anchor="middle" font-size="9" fill="#0c4a6e" font-family="Arial">全量~3000种阵容</text>
+  <text x="122" y="830" text-anchor="middle" font-size="9" fill="#0c4a6e" font-family="Arial">T0卡≥2 · 属性≥490</text>
+  <text x="122" y="846" text-anchor="middle" font-size="9" fill="#0c4a6e" font-family="Arial">淘汰70% → 保留900</text>
+  <text x="122" y="862" text-anchor="middle" font-size="8" fill="#64748b" font-family="Arial">零对战，毫秒级</text>
+  <text x="122" y="878" text-anchor="middle" font-size="8" fill="#6b7280" font-family="Arial">（数值微调时只重算</text>
+  <text x="122" y="892" text-anchor="middle" font-size="8" fill="#6b7280" font-family="Arial">受影响组合子集）</text>
+  <text x="122" y="916" text-anchor="middle" font-size="8" fill="#0369a1" font-family="Arial">影响域分析：~5%需重算</text>
+
+  <rect x="220" y="778" width="165" height="148" rx="8" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.5"/>
+  <text x="302" y="798" text-anchor="middle" font-size="10" font-weight="bold" fill="#0369a1" font-family="Arial">② 种子赛</text>
+  <text x="302" y="814" text-anchor="middle" font-size="9" fill="#0c4a6e" font-family="Arial">分8组锦标赛</text>
+  <text x="302" y="830" text-anchor="middle" font-size="9" fill="#0c4a6e" font-family="Arial">组内循环15场</text>
+  <text x="302" y="846" text-anchor="middle" font-size="9" fill="#0c4a6e" font-family="Arial">确定初始TrueSkill</text>
+  <text x="302" y="862" text-anchor="middle" font-size="9" fill="#0c4a6e" font-family="Arial">再淘汰50% → 保留450</text>
+  <text x="302" y="878" text-anchor="middle" font-size="8" fill="#64748b" font-family="Arial">≈13,500场对战</text>
+
+  <rect x="400" y="778" width="200" height="148" rx="8" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.5"/>
+  <text x="500" y="798" text-anchor="middle" font-size="10" font-weight="bold" fill="#0369a1" font-family="Arial">③ TrueSkill天梯</text>
+  <text x="500" y="814" text-anchor="middle" font-size="9" fill="#0c4a6e" font-family="Arial">匹配μ差≤50分的对战</text>
+  <text x="500" y="830" text-anchor="middle" font-size="9" fill="#0c4a6e" font-family="Arial">优先σ大（不确定高）</text>
+  <text x="500" y="846" text-anchor="middle" font-size="9" fill="#0c4a6e" font-family="Arial">收敛速度比ELO快3-5x</text>
+  <text x="500" y="862" text-anchor="middle" font-size="9" fill="#0c4a6e" font-family="Arial">≈90,000场（vs ELO 2.2亿）</text>
+  <text x="500" y="878" text-anchor="middle" font-size="8" fill="#64748b" font-family="Arial">warm-start：旧分作先验</text>
+  <text x="500" y="894" text-anchor="middle" font-size="8" fill="#64748b" font-family="Arial">（微调时大幅减少对战量）</text>
+
+  <rect x="616" y="778" width="440" height="148" rx="8" fill="#fef9c3" stroke="#ca8a04" stroke-width="2"/>
+  <text x="836" y="798" text-anchor="middle" font-size="10" font-weight="bold" fill="#78350f" font-family="Arial">④ 分层候选池输出（客观基准）</text>
+  <rect x="626" y="808" width="420" height="22" rx="4" fill="#fef08a" stroke="#eab308" stroke-width="1"/>
+  <text x="836" y="823" text-anchor="middle" font-size="10" font-weight="bold" fill="#713f12" font-family="Arial">🥇 Top100 精英池 · 决策网络主训练对手</text>
+  <rect x="626" y="834" width="420" height="20" rx="4" fill="#d1fae5" stroke="#6ee7b7" stroke-width="1"/>
+  <text x="836" y="848" text-anchor="middle" font-size="9" fill="#065f46" font-family="Arial">🥈 Top101~300 中坚池 · 泛化训练来源</text>
+  <rect x="626" y="858" width="420" height="20" rx="4" fill="#e0e7ff" stroke="#a5b4fc" stroke-width="1"/>
+  <text x="836" y="872" text-anchor="middle" font-size="9" fill="#1e40af" font-family="Arial">🥉 Top301~450 全量池 · OOD鲁棒训练</text>
+  <text x="836" y="898" text-anchor="middle" font-size="9" fill="#92400e" font-family="Arial">每N轮更新 · 永远是客观基准 · 不被网络污染</text>
+  <text x="836" y="914" text-anchor="middle" font-size="8" fill="#6b7280" font-family="Arial">占位启用时：新组合从优先队列追加评估</text>
+
+  <line x1="205" y1="852" x2="215" y2="852" stroke="#0284c7" stroke-width="1.5" marker-end="url(#ab)"/>
+  <line x1="385" y1="852" x2="395" y2="852" stroke="#0284c7" stroke-width="1.5" marker-end="url(#ab)"/>
+  <line x1="600" y1="852" x2="611" y2="852" stroke="#0284c7" stroke-width="1.5" marker-end="url(#ab)"/>
+
+  <line x1="550" y1="941" x2="550" y2="962" stroke="#0891b2" stroke-width="2" marker-end="url(#ab)"/>
+
+  <!-- ─── Phase 2: Top网络 ─── -->
+  <rect x="26" y="966" width="1048" height="196" rx="10" fill="#fff" stroke="#16a34a" stroke-width="2" filter="url(#sh)"/>
+  <rect x="26" y="966" width="180" height="24" rx="6" fill="#16a34a"/>
+  <text x="116" y="982" text-anchor="middle" font-size="10" font-weight="bold" fill="white" font-family="Arial">Phase 2 · Top 网络训练（监督学习）</text>
+
+  <rect x="40" y="998" width="200" height="150" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+  <text x="140" y="1018" text-anchor="middle" font-size="10" font-weight="bold" fill="#14532d" font-family="Arial">阵容特征编码</text>
+  <text x="140" y="1036" text-anchor="middle" font-size="9" fill="#166534" font-family="Arial">卡牌Tier向量（52维）</text>
+  <text x="140" y="1052" text-anchor="middle" font-size="9" fill="#166534" font-family="Arial">花色one-hot（16维）</text>
+  <text x="140" y="1068" text-anchor="middle" font-size="9" fill="#166534" font-family="Arial">属性均值/方差/偏度</text>
+  <text x="140" y="1084" text-anchor="middle" font-size="9" fill="#166534" font-family="Arial">阵型协同图嵌入</text>
+  <text x="140" y="1100" text-anchor="middle" font-size="9" fill="#166534" font-family="Arial">合计：128维固定向量</text>
+  <text x="140" y="1118" text-anchor="middle" font-size="8" fill="#6b7280" font-family="Arial">占位维度: input×mask=0</text>
+  <text x="140" y="1134" text-anchor="middle" font-size="8" fill="#6b7280" font-family="Arial">启用后mask=1，嵌入热启动</text>
+
+  <rect x="258" y="998" width="240" height="150" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="2.5" filter="url(#sh)"/>
+  <text x="378" y="1018" text-anchor="middle" font-size="11" font-weight="bold" fill="#14532d" font-family="Arial">🧠 Top 网络</text>
+  <text x="378" y="1036" text-anchor="middle" font-size="9" fill="#166534" font-family="Arial">FC(128→256)→BN→ReLU</text>
+  <text x="378" y="1052" text-anchor="middle" font-size="9" fill="#166534" font-family="Arial">FC(256→256)→BN→ReLU</text>
+  <text x="378" y="1068" text-anchor="middle" font-size="9" fill="#166534" font-family="Arial">FC(256→128)→输出头</text>
+  <text x="378" y="1086" text-anchor="middle" font-size="9" fill="#166534" font-family="Arial">监督目标：TrueSkill分</text>
+  <text x="378" y="1102" text-anchor="middle" font-size="9" fill="#166534" font-family="Arial">损失：MSE(pred, true_TS)</text>
+  <text x="378" y="1118" text-anchor="middle" font-size="9" fill="#166534" font-family="Arial">微调时：LoRA W'=W+αBA</text>
+  <text x="378" y="1136" text-anchor="middle" font-size="8" fill="#6b7280" font-family="Arial">监督信号永远来自战斗引擎</text>
+
+  <rect x="516" y="998" width="260" height="150" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+  <text x="646" y="1018" text-anchor="middle" font-size="10" font-weight="bold" fill="#14532d" font-family="Arial">Top 网络输出</text>
+  <text x="646" y="1036" text-anchor="middle" font-size="9" fill="#166534" font-family="Arial">① 预测TrueSkill分</text>
+  <text x="646" y="1052" text-anchor="middle" font-size="9" fill="#166534" font-family="Arial">② 阵容128维嵌入向量</text>
+  <text x="646" y="1068" text-anchor="middle" font-size="9" fill="#166534" font-family="Arial">③ 单卡Shapley重要性</text>
+  <text x="646" y="1084" text-anchor="middle" font-size="9" fill="#166534" font-family="Arial">④ Top100/300/450候选池</text>
+  <text x="646" y="1102" text-anchor="middle" font-size="9" font-weight="bold" fill="#b45309" font-family="Arial">★ 嵌入向量供决策网络复用</text>
+  <text x="646" y="1118" text-anchor="middle" font-size="9" font-weight="bold" fill="#b45309" font-family="Arial">★ 相似阵容→相近向量（泛化）</text>
+
+  <rect x="794" y="998" width="264" height="150" rx="8" fill="#ecfdf5" stroke="#34d399" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <text x="926" y="1018" text-anchor="middle" font-size="10" font-weight="bold" fill="#065f46" font-family="Arial">嵌入向量为何关键</text>
+  <text x="926" y="1038" text-anchor="middle" font-size="9" fill="#047857" font-family="Arial">对手不再用 ID 表示</text>
+  <text x="926" y="1054" text-anchor="middle" font-size="9" fill="#047857" font-family="Arial">而用 128 维嵌入向量</text>
+  <text x="926" y="1072" text-anchor="middle" font-size="9" fill="#047857" font-family="Arial">相似阵容 → 相近向量</text>
+  <text x="926" y="1090" text-anchor="middle" font-size="9" font-weight="bold" fill="#b45309" font-family="Arial">→ 决策网络可泛化到</text>
+  <text x="926" y="1106" text-anchor="middle" font-size="9" font-weight="bold" fill="#b45309" font-family="Arial">从未见过的冷门阵容</text>
+  <text x="926" y="1124" text-anchor="middle" font-size="9" font-weight="bold" fill="#b45309" font-family="Arial">彻底解决 OOD 问题</text>
+
+  <line x1="240" y1="1073" x2="253" y2="1073" stroke="#16a34a" stroke-width="1.5" marker-end="url(#ag)"/>
+  <line x1="498" y1="1073" x2="511" y2="1073" stroke="#16a34a" stroke-width="1.5" marker-end="url(#ag)"/>
+  <line x1="776" y1="1073" x2="789" y2="1073" stroke="#16a34a" stroke-width="1.5" marker-end="url(#ag)"/>
+
+  <!-- TrueSkill → Top网络 监督信号 -->
+  <path d="M 836 963 L 836 955 L 378 955 L 378 994" stroke="#ca8a04" stroke-width="1.5" fill="none" stroke-dasharray="4,3" marker-end="url(#ao)"/>
+  <text x="607" y="951" text-anchor="middle" font-size="9" fill="#92400e" font-family="Arial">TrueSkill 监督信号（客观基准）</text>
+
+  <line x1="550" y1="1162" x2="550" y2="1182" stroke="#16a34a" stroke-width="2" marker-end="url(#ag)"/>
+
+  <!-- ─── Phase 3: 决策网络 ─── -->
+  <rect x="26" y="1186" width="1048" height="246" rx="10" fill="#fff" stroke="#7c3aed" stroke-width="2" filter="url(#sh)"/>
+  <rect x="26" y="1186" width="220" height="24" rx="6" fill="#7c3aed"/>
+  <text x="136" y="1202" text-anchor="middle" font-size="10" font-weight="bold" fill="white" font-family="Arial">Phase 3 · 决策网络（AlphaZero 克制学习）</text>
+
+  <!-- 混合采样 -->
+  <rect x="40" y="1218" width="220" height="196" rx="8" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="150" y="1238" text-anchor="middle" font-size="10" font-weight="bold" fill="#1d4ed8" font-family="Arial">混合对手采样</text>
+  <text x="150" y="1254" text-anchor="middle" font-size="9" fill="#1e40af" font-family="Arial">解决OOD冷门问题</text>
+  <rect x="52" y="1262" width="196" height="20" rx="4" fill="#fde8ff" stroke="#d946ef" stroke-width="1"/>
+  <text x="150" y="1276" text-anchor="middle" font-size="9" font-weight="bold" fill="#86198f" font-family="Arial">60% Top100 精英</text>
+  <rect x="52" y="1286" width="196" height="20" rx="4" fill="#d1fae5" stroke="#6ee7b7" stroke-width="1"/>
+  <text x="150" y="1300" text-anchor="middle" font-size="9" fill="#065f46" font-family="Arial">20% 中坚(101~300)</text>
+  <rect x="52" y="1310" width="196" height="20" rx="4" fill="#e0e7ff" stroke="#a5b4fc" stroke-width="1"/>
+  <text x="150" y="1324" text-anchor="middle" font-size="9" fill="#1e40af" font-family="Arial">12% 全量随机阵容</text>
+  <rect x="52" y="1334" width="196" height="20" rx="4" fill="#fee2e2" stroke="#fca5a5" stroke-width="1"/>
+  <text x="150" y="1348" text-anchor="middle" font-size="9" fill="#7f1d1d" font-family="Arial">8% 对抗构造阵容</text>
+  <text x="150" y="1372" text-anchor="middle" font-size="8" fill="#6b7280" font-family="Arial">出场率低 → UCB权重大</text>
+  <text x="150" y="1386" text-anchor="middle" font-size="8" fill="#6b7280" font-family="Arial">任意阵容都会出现</text>
+  <text x="150" y="1400" text-anchor="middle" font-size="8" font-weight="bold" fill="#7c3aed" font-family="Arial">冷门 OOD → 覆盖训练</text>
+
+  <!-- MCTS -->
+  <rect x="278" y="1218" width="230" height="196" rx="8" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+  <text x="393" y="1238" text-anchor="middle" font-size="10" font-weight="bold" fill="#1d4ed8" font-family="Arial">♟ MCTS 自对弈</text>
+  <text x="393" y="1256" text-anchor="middle" font-size="9" fill="#1e40af" font-family="Arial">输入：对手嵌入向量(128维)</text>
+  <text x="393" y="1272" text-anchor="middle" font-size="9" fill="#1e40af" font-family="Arial">     + 当前选牌状态</text>
+  <text x="393" y="1290" text-anchor="middle" font-size="9" fill="#1e40af" font-family="Arial">模拟400次 → 策略π</text>
+  <text x="393" y="1306" text-anchor="middle" font-size="9" fill="#1e40af" font-family="Arial">先手+后手各50%</text>
+  <text x="393" y="1322" text-anchor="middle" font-size="9" fill="#1e40af" font-family="Arial">Dirichlet噪声增强探索</text>
+  <text x="393" y="1340" text-anchor="middle" font-size="9" fill="#1e40af" font-family="Arial">生成(s,π,z)训练元组</text>
+  <text x="393" y="1358" text-anchor="middle" font-size="9" fill="#1e40af" font-family="Arial">优先级经验回放缓冲区</text>
+  <text x="393" y="1374" text-anchor="middle" font-size="8" fill="#6b7280" font-family="Arial">buffer=1,000,000</text>
+  <text x="393" y="1390" text-anchor="middle" font-size="8" fill="#6b7280" font-family="Arial">误差大的样本优先训练</text>
+
+  <!-- 决策网络结构 -->
+  <rect x="526" y="1218" width="260" height="196" rx="8" fill="#bfdbfe" stroke="#1d4ed8" stroke-width="2.5" filter="url(#sh)"/>
+  <text x="656" y="1238" text-anchor="middle" font-size="11" font-weight="bold" fill="#1e3a8a" font-family="Arial">🧠 决策网络</text>
+  <text x="656" y="1256" text-anchor="middle" font-size="9" fill="#1e3a8a" font-family="Arial">输入：己方状态+对手嵌入(256维)</text>
+  <text x="656" y="1272" text-anchor="middle" font-size="9" fill="#1e3a8a" font-family="Arial">ResBlock×4 (256维)</text>
+  <text x="656" y="1290" text-anchor="middle" font-size="9" fill="#1e3a8a" font-family="Arial">策略头 → π(52+1维)</text>
+  <text x="656" y="1308" text-anchor="middle" font-size="9" fill="#1e3a8a" font-family="Arial">价值头 → v(胜率0~1)</text>
+  <text x="656" y="1326" text-anchor="middle" font-size="9" fill="#1e3a8a" font-family="Arial">L=-π·log(p)+MSE(v,z)</text>
+  <text x="656" y="1346" text-anchor="middle" font-size="9" fill="#1e3a8a" font-family="Arial">知识蒸馏防遗忘：</text>
+  <text x="656" y="1362" text-anchor="middle" font-size="9" fill="#1e3a8a" font-family="Arial">L+=λ·KL(新输出||旧输出)</text>
+  <text x="656" y="1378" text-anchor="middle" font-size="8" fill="#6b7280" font-family="Arial">60%新数据+40%旧数据蒸馏</text>
+  <text x="656" y="1394" text-anchor="middle" font-size="8" font-weight="bold" fill="#b45309" font-family="Arial">输入嵌入→迁移克制策略</text>
+
+  <!-- 决策输出 -->
+  <rect x="804" y="1218" width="254" height="196" rx="8" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="931" y="1238" text-anchor="middle" font-size="10" font-weight="bold" fill="#1d4ed8" font-family="Arial">Phase 4 反馈（解耦单向）</text>
+  <text x="931" y="1256" text-anchor="middle" font-size="9" fill="#1e40af" font-family="Arial">决策 vs Top100 实战100场</text>
+  <text x="931" y="1274" text-anchor="middle" font-size="9" fill="#1e40af" font-family="Arial">↓</text>
+  <text x="931" y="1290" text-anchor="middle" font-size="9" fill="#1e40af" font-family="Arial">克制阵容追加ELO数据库</text>
+  <text x="931" y="1308" text-anchor="middle" font-size="9" fill="#1e40af" font-family="Arial">↓</text>
+  <text x="931" y="1324" text-anchor="middle" font-size="9" fill="#1e40af" font-family="Arial">新ELO数据→Top网络微调</text>
+  <text x="931" y="1340" text-anchor="middle" font-size="9" fill="#1e40af" font-family="Arial">（低学习率增量更新）</text>
+  <text x="931" y="1360" text-anchor="middle" font-size="8" fill="#6b7280" font-family="Arial">反馈的是「新对战数据」</text>
+  <text x="931" y="1376" text-anchor="middle" font-size="8" fill="#6b7280" font-family="Arial">而非「网络输出」</text>
+  <text x="931" y="1392" text-anchor="middle" font-size="8" font-weight="bold" fill="#059669" font-family="Arial">单向数据流，无循环偏差</text>
+
+  <!-- Top嵌入→决策网络 -->
+  <path d="M 646 1163 L 646 1178 L 393 1178 L 393 1212" stroke="#16a34a" stroke-width="1.5" fill="none" stroke-dasharray="4,3" marker-end="url(#ag)"/>
+  <text x="520" y="1175" text-anchor="middle" font-size="9" fill="#15803d" font-family="Arial">嵌入向量（128维）</text>
+
+  <line x1="260" y1="1316" x2="273" y2="1316" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#ab)"/>
+  <line x1="508" y1="1316" x2="521" y2="1316" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#ab)"/>
+  <line x1="786" y1="1316" x2="799" y2="1316" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#ab)"/>
+
+  <line x1="550" y1="1432" x2="550" y2="1453" stroke="#7c3aed" stroke-width="2" marker-end="url(#ap)"/>
+
+  <!-- ─── 收敛判断 ─── -->
+  <rect x="200" y="1455" width="700" height="70" rx="10" fill="#1e293b" stroke="#475569" stroke-width="2"/>
+  <text x="550" y="1478" text-anchor="middle" font-size="12" font-weight="bold" fill="white" font-family="Arial">收敛检测</text>
+  <text x="550" y="1498" text-anchor="middle" font-size="10" fill="#94a3b8" font-family="Arial">Top10变化率&lt;5% AND 决策网络胜率稳定 AND 连续3次大循环满足</text>
+
+  <!-- 未收敛循环 -->
+  <line x1="200" y1="1490" x2="50" y2="1490" stroke="#64748b" stroke-width="2"/>
+  <line x1="50" y1="1490" x2="50" y2="752" stroke="#64748b" stroke-width="2"/>
+  <line x1="50" y1="752" x2="26" y2="752" stroke="#64748b" stroke-width="2" marker-end="url(#a0)"/>
+  <text x="36" y="1125" text-anchor="middle" font-size="10" fill="#64748b" font-family="Arial" transform="rotate(-90,36,1125)">未收敛 → 返回 Phase 1</text>
+
+  <!-- 收敛 → 下一步 -->
+  <line x1="550" y1="1525" x2="550" y2="1548" stroke="#16a34a" stroke-width="2" marker-end="url(#ag)"/>
+  <text x="600" y="1540" font-size="9" fill="#16a34a" font-family="Arial">收敛 ✓</text>
+
+  <!-- ══════════════════ STAGE 4: 训练完成 ══════════════════ -->
+  <rect x="10" y="1710" width="90" height="18" rx="5" fill="#0f766e"/>
+  <text x="55" y="1723" text-anchor="middle" font-size="9" font-weight="bold" fill="white" font-family="Arial">STAGE 4</text>
+
+  <rect x="10" y="1732" width="1080" height="160" rx="10" fill="#fff" stroke="#0f766e" stroke-width="2" filter="url(#sh)"/>
+  <text x="550" y="1754" text-anchor="middle" font-size="13" font-weight="bold" fill="#134e4a" font-family="Arial">训练完成 · 快照覆盖</text>
+
+  <!-- 验证 -->
+  <rect x="30" y="1762" width="230" height="112" rx="8" fill="#ccfbf1" stroke="#14b8a6" stroke-width="1.5"/>
+  <text x="145" y="1782" text-anchor="middle" font-size="11" font-weight="bold" fill="#134e4a" font-family="Arial">回归验证</text>
+  <text x="145" y="1800" text-anchor="middle" font-size="9" fill="#0f766e" font-family="Arial">受影响组合预测误差&lt;30分</text>
+  <text x="145" y="1816" text-anchor="middle" font-size="9" fill="#0f766e" font-family="Arial">未影响组合预测变化&lt;1%</text>
+  <text x="145" y="1832" text-anchor="middle" font-size="9" fill="#0f766e" font-family="Arial">Top5克制命中率&gt;80%</text>
+  <text x="145" y="1856" text-anchor="middle" font-size="8" fill="#6b7280" font-family="Arial">未通过 → 加大训练量重走</text>
+
+  <!-- 快照覆盖 -->
+  <rect x="290" y="1762" width="280" height="112" rx="8" fill="#ccfbf1" stroke="#14b8a6" stroke-width="2"/>
+  <text x="430" y="1782" text-anchor="middle" font-size="11" font-weight="bold" fill="#134e4a" font-family="Arial">📸 覆盖配置表快照</text>
+  <text x="430" y="1800" text-anchor="middle" font-size="9" fill="#0f766e" font-family="Arial">card_values_snapshot.json</text>
+  <text x="430" y="1818" text-anchor="middle" font-size="9" fill="#0f766e" font-family="Arial">← card_values_current.json</text>
+  <text x="430" y="1838" text-anchor="middle" font-size="9" font-weight="bold" fill="#0f766e" font-family="Arial">下次启动的diff基准</text>
+  <text x="430" y="1856" text-anchor="middle" font-size="8" fill="#6b7280" font-family="Arial">先验证通过，再覆盖</text>
+
+  <!-- 模型覆盖 -->
+  <rect x="600" y="1762" width="280" height="112" rx="8" fill="#ccfbf1" stroke="#14b8a6" stroke-width="2"/>
+  <text x="740" y="1782" text-anchor="middle" font-size="11" font-weight="bold" fill="#134e4a" font-family="Arial">💾 覆盖模型权重</text>
+  <text x="740" y="1800" text-anchor="middle" font-size="9" fill="#0f766e" font-family="Arial">model.ckpt（全量权重）</text>
+  <text x="740" y="1818" text-anchor="middle" font-size="9" fill="#0f766e" font-family="Arial">lora_adapters.ckpt（增量）</text>
+  <text x="740" y="1838" text-anchor="middle" font-size="9" fill="#0f766e" font-family="Arial">elo_database.db（TrueSkill）</text>
+  <text x="740" y="1856" text-anchor="middle" font-size="8" fill="#6b7280" font-family="Arial">保留version历史供回滚</text>
+
+  <!-- 部署 -->
+  <rect x="910" y="1762" width="164" height="112" rx="8" fill="#134e4a" stroke="#14b8a6" stroke-width="2"/>
+  <text x="992" y="1790" text-anchor="middle" font-size="11" font-weight="bold" fill="white" font-family="Arial">🚀 上线部署</text>
+  <text x="992" y="1808" text-anchor="middle" font-size="9" fill="#6ee7b7" font-family="Arial">等待下次触发</text>
+  <text x="992" y="1826" text-anchor="middle" font-size="9" fill="#6ee7b7" font-family="Arial">新卡加入时</text>
+  <text x="992" y="1842" text-anchor="middle" font-size="9" fill="#6ee7b7" font-family="Arial">自动增量训练</text>
+
+  <line x1="260" y1="1818" x2="285" y2="1818" stroke="#0f766e" stroke-width="1.5" marker-end="url(#at)"/>
+  <line x1="580" y1="1818" x2="595" y2="1818" stroke="#0f766e" stroke-width="1.5" marker-end="url(#at)"/>
+  <line x1="880" y1="1818" x2="905" y2="1818" stroke="#0f766e" stroke-width="1.5" marker-end="url(#at)"/>
+
+  <!-- 验证 → STAGE4 -->
+  <rect x="200" y="1548" width="700" height="154" rx="10" fill="#fff" stroke="#e2e8f0" stroke-width="1.5" filter="url(#sh)"/>
+  <text x="550" y="1570" text-anchor="middle" font-size="12" font-weight="bold" fill="#0f172a" font-family="Arial">收敛后验证回归</text>
+
+  <rect x="220" y="1578" width="196" height="112" rx="8" fill="#f0fdf4" stroke="#22c55e" stroke-width="1.5"/>
+  <text x="318" y="1598" text-anchor="middle" font-size="10" font-weight="bold" fill="#166534" font-family="Arial">受影响组合</text>
+  <text x="318" y="1616" text-anchor="middle" font-size="9" fill="#166534" font-family="Arial">新模型 vs 战斗引擎</text>
+  <text x="318" y="1634" text-anchor="middle" font-size="9" fill="#166534" font-family="Arial">误差 &lt; 30分 ✓</text>
+  <text x="318" y="1678" text-anchor="middle" font-size="8" fill="#6b7280" font-family="Arial">确保变更后预测准确</text>
+
+  <rect x="432" y="1578" width="196" height="112" rx="8" fill="#f0fdf4" stroke="#22c55e" stroke-width="1.5"/>
+  <text x="530" y="1598" text-anchor="middle" font-size="10" font-weight="bold" fill="#166534" font-family="Arial">未影响组合</text>
+  <text x="530" y="1616" text-anchor="middle" font-size="9" fill="#166534" font-family="Arial">随机抽500个</text>
+  <text x="530" y="1634" text-anchor="middle" font-size="9" fill="#166534" font-family="Arial">预测变化 &lt;1% ✓</text>
+  <text x="530" y="1678" text-anchor="middle" font-size="8" fill="#6b7280" font-family="Arial">确保旧知识未遗忘</text>
+
+  <rect x="644" y="1578" width="236" height="112" rx="8" fill="#f0fdf4" stroke="#22c55e" stroke-width="1.5"/>
+  <text x="762" y="1598" text-anchor="middle" font-size="10" font-weight="bold" fill="#166534" font-family="Arial">克制准确率</text>
+  <text x="762" y="1616" text-anchor="middle" font-size="9" fill="#166534" font-family="Arial">决策推荐 vs 实际胜率</text>
+  <text x="762" y="1634" text-anchor="middle" font-size="9" fill="#166534" font-family="Arial">Top5命中率 &gt;80% ✓</text>
+  <text x="762" y="1678" text-anchor="middle" font-size="8" fill="#6b7280" font-family="Arial">冷门阵容也需验证</text>
+
+  <line x1="550" y1="1700" x2="550" y2="1726" stroke="#0f766e" stroke-width="2" marker-end="url(#at)"/>
+
+  <!-- ══════════════════ STAGE 5: 功能输出 ══════════════════ -->
+  <rect x="10" y="1904" width="90" height="18" rx="5" fill="#0f172a"/>
+  <text x="55" y="1917" text-anchor="middle" font-size="9" font-weight="bold" fill="white" font-family="Arial">输出功能</text>
+
+  <rect x="10" y="1926" width="1080" height="128" rx="10" fill="#0f172a" filter="url(#sh)"/>
+
+  <rect x="30" y="1942" width="320" height="96" rx="8" fill="#14532d" stroke="#22c55e" stroke-width="1.5"/>
+  <text x="190" y="1964" text-anchor="middle" font-size="12" font-weight="bold" fill="white" font-family="Arial">📊 卡牌/阵容强度排行</text>
+  <text x="190" y="1982" text-anchor="middle" font-size="10" fill="#86efac" font-family="Arial">TrueSkill客观排行 + Top网络快速预测</text>
+  <text x="190" y="1998" text-anchor="middle" font-size="10" fill="#86efac" font-family="Arial">Shapley归因 → 单卡平均贡献度</text>
+  <text x="190" y="2014" text-anchor="middle" font-size="9" fill="#6ee7b7" font-family="Arial">全量候选池天梯榜，支持在线更新</text>
+  <text x="190" y="2030" text-anchor="middle" font-size="9" fill="#4ade80" font-family="Arial">新卡启用后自动融入排行</text>
+
+  <rect x="390" y="1942" width="320" height="96" rx="8" fill="#1e3a8a" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="550" y="1964" text-anchor="middle" font-size="12" font-weight="bold" fill="white" font-family="Arial">⚔️ 克制阵容推荐</text>
+  <text x="550" y="1982" text-anchor="middle" font-size="10" fill="#bfdbfe" font-family="Arial">输入任意阵容（含冷门/新启用卡）</text>
+  <text x="550" y="1998" text-anchor="middle" font-size="10" fill="#bfdbfe" font-family="Arial">→ 嵌入向量 → 决策网络推理</text>
+  <text x="550" y="2014" text-anchor="middle" font-size="9" fill="#93c5fd" font-family="Arial">输出：最优克制阵容 + 胜率估计</text>
+  <text x="550" y="2030" text-anchor="middle" font-size="9" fill="#93c5fd" font-family="Arial">OOD问题根本解决，冷门可克制</text>
+
+  <rect x="750" y="1942" width="320" height="96" rx="8" fill="#4c1d95" stroke="#a855f7" stroke-width="1.5"/>
+  <text x="910" y="1964" text-anchor="middle" font-size="12" font-weight="bold" fill="white" font-family="Arial">🎯 最高胜率阵容推荐</text>
+  <text x="910" y="1982" text-anchor="middle" font-size="10" fill="#e9d5ff" font-family="Arial">不指定对手 → Top网络直出Top5</text>
+  <text x="910" y="1998" text-anchor="middle" font-size="10" fill="#e9d5ff" font-family="Arial">指定对手 → 决策网络最优克制</text>
+  <text x="910" y="2014" text-anchor="middle" font-size="9" fill="#d8b4fe" font-family="Arial">支持实时在线推理，&lt;50ms响应</text>
+  <text x="910" y="2030" text-anchor="middle" font-size="9" fill="#d8b4fe" font-family="Arial">新卡版本更新后自动重训复用</text>
+
+  <!-- 快照覆盖 → Stage 0 回路 -->
+  <path d="M 1074 1818 Q 1090 1818 1090 137 Q 1090 100 1060 100" stroke="#0f766e" stroke-width="2" fill="none" stroke-dasharray="7,4" marker-end="url(#at)"/>
+  <text x="1085" y="960" text-anchor="middle" font-size="10" fill="#0f766e" font-family="Arial" transform="rotate(90,1085,960)">存档快照 · 等待下次触发</text>
+
+  <!-- 底部说明 -->
+  <rect x="10" y="2074" width="1080" height="118" rx="10" fill="#1e293b"/>
+  <text x="550" y="2096" text-anchor="middle" font-size="13" font-weight="bold" fill="white" font-family="Arial">设计核心原则</text>
+  <text x="80" y="2118" font-size="10" fill="#94a3b8" font-family="Arial">① 客观基准：TrueSkill永远来自战斗引擎，不被网络污染</text>
+  <text x="80" y="2136" font-size="10" fill="#94a3b8" font-family="Arial">② 单向数据流：ELO → Top网络 → 决策网络，无循环依赖</text>
+  <text x="80" y="2154" font-size="10" fill="#94a3b8" font-family="Arial">③ 自动感知：配置表快照对比，自动判定变更类型并路由，无需人工标注</text>
+  <text x="560" y="2118" font-size="10" fill="#94a3b8" font-family="Arial">④ 高效复用：LoRA微调 + warm-start + 嵌入热启动，最坏情况节省60%+时间</text>
+  <text x="560" y="2136" font-size="10" fill="#94a3b8" font-family="Arial">⑤ OOD泛化：嵌入向量表示对手，相似阵容自动迁移克制策略</text>
+  <text x="560" y="2154" font-size="10" fill="#94a3b8" font-family="Arial">⑥ 先验证后覆盖：快照和模型在回归测试通过后才写入</text>
+</svg>
