@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TTF 字体字符集分析器 v6</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:#0f1117;color:#e2e8f0;min-height:100vh}
+  header{background:#1a1d2e;border-bottom:1px solid #2d3148;padding:14px 24px;display:flex;align-items:center;gap:12px}
+  header h1{font-size:1.1rem;font-weight:600;color:#a78bfa}
+  header .ver{font-size:.72rem;background:#312e81;color:#c4b5fd;padding:2px 8px;border-radius:99px}
+  .badge-mem{font-size:.68rem;background:#064e3b;color:#6ee7b7;padding:2px 8px;border-radius:99px}
+
+  /* ── Layout ── */
+  .layout{display:grid;grid-template-columns:320px 1fr;height:calc(100vh - 49px)}
+  .sidebar{background:#13162a;border-right:1px solid #2d3148;overflow-y:auto;display:flex;flex-direction:column}
+  .main{overflow-y:auto;display:flex;flex-direction:column}
+
+  /* ── Upload zone ── */
+  .upload-zone{margin:16px;border:2px dashed #3b3f6e;border-radius:12px;padding:28px 16px;text-align:center;cursor:pointer;transition:.2s;position:relative}
+  .upload-zone:hover,.upload-zone.drag{border-color:#7c3aed;background:#1e1b4b22}
+  .upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer}
+  .upload-zone .icon{font-size:2rem;margin-bottom:8px}
+  .upload-zone p{font-size:.8rem;color:#64748b}
+  .upload-zone .name{font-size:.85rem;color:#a78bfa;font-weight:500;margin-top:6px;word-break:break-all}
+
+  /* ── Font info ── */
+  .font-info{margin:0 16px 12px;background:#1e2235;border-radius:10px;padding:12px;font-size:.78rem;color:#94a3b8}
+  .font-info b{color:#e2e8f0;display:block;margin-bottom:4px;font-size:.85rem}
+  .font-info .row{display:flex;justify-content:space-between;margin-top:3px}
+  .font-info .val{color:#a78bfa}
+
+  /* ── Progress ── */
+  .progress-wrap{margin:0 16px 12px;display:none}
+  .progress-bar{height:4px;background:#1e2235;border-radius:2px;overflow:hidden}
+  .progress-fill{height:100%;background:linear-gradient(90deg,#7c3aed,#a78bfa);width:0%;transition:width .15s}
+  .progress-label{font-size:.72rem;color:#64748b;margin-top:4px;text-align:center}
+
+  /* ── Stats ── */
+  .stats-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:0 16px 12px}
+  .stat-card{background:#1e2235;border-radius:8px;padding:10px 8px;text-align:center}
+  .stat-card .n{font-size:1.3rem;font-weight:700}
+  .stat-card .l{font-size:.68rem;color:#64748b;margin-top:2px}
+  .stat-supported .n{color:#34d399}
+  .stat-noglyph .n{color:#fb923c}
+  .stat-missing .n{color:#f87171}
+
+  /* ── Tabs ── */
+  .tabs{display:flex;border-bottom:1px solid #2d3148;background:#1a1d2e}
+  .tab{flex:1;padding:10px 4px;font-size:.78rem;text-align:center;cursor:pointer;color:#64748b;border-bottom:2px solid transparent;transition:.15s}
+  .tab.active{color:#a78bfa;border-bottom-color:#7c3aed}
+
+  /* ── Block list ── */
+  .block-list{padding:8px}
+  .block-item{background:#1e2235;border-radius:8px;margin-bottom:6px;overflow:hidden}
+  .block-header{display:flex;align-items:center;padding:9px 12px;cursor:pointer;gap:8px;user-select:none}
+  .block-header:hover{background:#252845}
+  .block-name{flex:1;font-size:.8rem;font-weight:500}
+  .block-pct{font-size:.75rem;color:#64748b}
+  .block-bar-wrap{height:3px;background:#2d3148;margin:0 12px 8px}
+  .block-bar{height:100%;background:#7c3aed;transition:width .3s}
+  .block-chars{padding:0 10px 10px;display:flex;flex-wrap:wrap;gap:4px;max-height:200px;overflow-y:auto}
+  .c-cell{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:5px;font-size:.9rem;cursor:default;border:1px solid transparent;transition:.1s}
+  .c-cell:hover{transform:scale(1.2);z-index:2}
+  .supported{background:#064e3b22;border-color:#065f46;color:#34d399}
+  .no-glyph{background:#7c2d1222;border-color:#92400e;color:#fb923c}
+  .missing{background:#450a0a22;border-color:#7f1d1d;color:#f87171}
+  .block-empty{font-size:.72rem;color:#475569;padding:6px 2px}
+
+  /* ── Main tabs ── */
+  .main-tabs{display:flex;background:#1a1d2e;border-bottom:1px solid #2d3148}
+  .main-tab{padding:11px 20px;font-size:.82rem;cursor:pointer;color:#64748b;border-bottom:2px solid transparent;transition:.15s}
+  .main-tab.active{color:#a78bfa;border-bottom-color:#7c3aed}
+
+  /* ── Text panel ── */
+  .text-panel{padding:16px;flex:1;display:flex;flex-direction:column;gap:12px}
+  .textarea-wrap{position:relative}
+  textarea{width:100%;min-height:120px;background:#1e2235;border:1px solid #2d3148;border-radius:10px;padding:12px;color:#e2e8f0;font-size:.88rem;resize:vertical;outline:none;line-height:1.6;font-family:inherit}
+  textarea:focus{border-color:#7c3aed}
+  textarea.drag-over{border-color:#a78bfa;background:#1e1b4b33}
+
+  .text-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .btn{padding:7px 16px;border-radius:8px;border:none;cursor:pointer;font-size:.8rem;font-weight:500;transition:.15s}
+  .btn-primary{background:#7c3aed;color:#fff}
+  .btn-primary:hover{background:#6d28d9}
+  .btn-primary:disabled{background:#3b3f6e;color:#64748b;cursor:default}
+  .btn-outline{background:transparent;border:1px solid #3b3f6e;color:#94a3b8}
+  .btn-outline:hover{border-color:#7c3aed;color:#a78bfa}
+  .btn-sm{padding:5px 12px;font-size:.75rem}
+  .toggle-wrap{display:flex;align-items:center;gap:6px;font-size:.78rem;color:#94a3b8;cursor:pointer;user-select:none}
+  .toggle{width:32px;height:18px;background:#2d3148;border-radius:99px;position:relative;transition:.2s;flex-shrink:0}
+  .toggle.on{background:#7c3aed}
+  .toggle::after{content:'';position:absolute;width:12px;height:12px;background:#fff;border-radius:50%;top:3px;left:3px;transition:.2s}
+  .toggle.on::after{left:17px}
+
+  /* ── View mode toggle ── */
+  .view-mode-wrap{display:flex;align-items:center;gap:6px}
+  .view-mode-btn{padding:4px 10px;border-radius:6px;border:1px solid #3b3f6e;background:transparent;color:#64748b;font-size:.73rem;cursor:pointer;transition:.15s}
+  .view-mode-btn.active{background:#312e81;border-color:#7c3aed;color:#a78bfa}
+
+  /* ── Text result ── */
+  .text-result{background:#1e2235;border-radius:10px;padding:12px;min-height:80px}
+  .text-result-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+  .result-stats{font-size:.78rem;color:#94a3b8}
+  .result-stats span{margin-right:10px}
+  .result-stats .ng{color:#fb923c}
+  .result-stats .ms{color:#f87171}
+  .char-grid{display:flex;flex-wrap:wrap;gap:5px}
+  .char-card{padding:4px 8px;border-radius:6px;font-size:.9rem;border:1px solid transparent;cursor:default;min-width:30px;text-align:center}
+  .inline-text{line-height:2.2;font-size:1rem;word-break:break-all}
+  .inline-text .ch{border-radius:3px;padding:1px 2px}
+
+  /* ── Render progress ── */
+  .render-progress{font-size:.75rem;color:#64748b;padding:8px 0;display:none}
+
+  /* ── Problem panel ── */
+  .problem-panel{padding:16px;flex:1;overflow-y:auto}
+  .prob-section{margin-bottom:20px}
+  .prob-title{font-size:.82rem;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+  .prob-title .cnt{font-size:.72rem;background:#1e2235;padding:2px 8px;border-radius:99px;color:#94a3b8}
+  .prob-export-row{display:flex;gap:8px;margin-bottom:12px}
+
+  /* ── Problem char card ── */
+  .prob-char-card{background:#1e2235;border-radius:8px;margin-bottom:8px;overflow:hidden}
+  .prob-char-header{display:flex;align-items:center;padding:9px 12px;gap:10px;cursor:pointer}
+  .prob-char-header:hover{background:#252845}
+  .prob-char-glyph{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:7px;font-size:1.2rem;flex-shrink:0}
+  .prob-char-info{flex:1}
+  .prob-char-info .char-name{font-size:.82rem;font-weight:500}
+  .prob-char-info .char-meta{font-size:.7rem;color:#64748b;margin-top:1px}
+  .prob-char-count{font-size:.8rem;font-weight:600}
+
+  /* ── Context snippets ── */
+  .ctx-list{padding:0 12px 10px}
+  .ctx-item{background:#0f1117;border-radius:6px;padding:7px 10px;margin-bottom:5px;font-size:.82rem;line-height:1.6;word-break:break-all}
+  .ctx-item .ctx-line{font-size:.68rem;color:#475569;margin-bottom:3px}
+  .ctx-highlight{background:#7c3aed44;color:#c4b5fd;border-radius:3px;padding:0 2px;font-weight:600}
+  .ctx-no-data{font-size:.75rem;color:#475569;padding:6px 12px 10px}
+
+  /* ── Overview tab ── */
+  .overview-panel{padding:16px}
+  .ov-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+  .ov-card{background:#1e2235;border-radius:10px;padding:14px}
+  .ov-card .ov-label{font-size:.72rem;color:#64748b;margin-bottom:6px}
+  .ov-card .ov-val{font-size:1.2rem;font-weight:700;color:#a78bfa}
+  .ov-card .ov-sub{font-size:.7rem;color:#475569;margin-top:3px}
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar{width:5px;height:5px}
+  ::-webkit-scrollbar-track{background:#0f1117}
+  ::-webkit-scrollbar-thumb{background:#3b3f6e;border-radius:99px}
+
+  /* ── Loading spinner ── */
+  .spinner{display:inline-block;width:14px;height:14px;border:2px solid #3b3f6e;border-top-color:#a78bfa;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .hidden{display:none!important}
+  .tip{font-size:.72rem;color:#475569;padding:6px 0}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="icon">🔤</div>
+  <h1>TTF 字体字符集分析器</h1>
+  <span class="ver">v6</span>
+  <span class="badge-mem">⚡ 内存优化版</span>
+</header>
+
+<div class="layout">
+<!-- ══════════ SIDEBAR ══════════ -->
+<div class="sidebar">
+
+  <!-- Upload -->
+  <div class="upload-zone" id="uploadZone">
+    <input type="file" id="fileInput" accept=".ttf,.otf">
+    <div class="icon">📂</div>
+    <p>拖拽或点击选择 TTF/OTF 文件</p>
+    <div class="name" id="uploadName">未选择文件</div>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-wrap" id="progressWrap">
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-label" id="progressLabel">解析中...</div>
+  </div>
+
+  <!-- Font info -->
+  <div class="font-info hidden" id="fontInfo">
+    <b id="fontName">—</b>
+    <div class="row"><span>字形总数</span><span class="val" id="infoGlyphs">—</span></div>
+    <div class="row"><span>cmap 映射</span><span class="val" id="infoCmap">—</span></div>
+    <div class="row"><span>有字形数据</span><span class="val" id="infoGlyphData">—</span></div>
+    <div class="row"><span>索引格式</span><span class="val" id="infoLoca">—</span></div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid hidden" id="statsGrid">
+    <div class="stat-card stat-supported"><div class="n" id="statS">0</div><div class="l">✓ 支持</div></div>
+    <div class="stat-card stat-noglyph"><div class="n" id="statN">0</div><div class="l">⚠ 无字形</div></div>
+    <div class="stat-card stat-missing"><div class="n" id="statM">0</div><div class="l">✗ 缺失</div></div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active" data-tab="blocks">Unicode 块</div>
+    <div class="tab" data-tab="search">搜索</div>
+  </div>
+
+  <!-- Block list -->
+  <div class="block-list" id="blockList">
+    <p class="tip" style="text-align:center;padding:20px 0;color:#3b3f6e">请先加载字体文件</p>
+  </div>
+
+  <!-- Search tab (hidden by default) -->
+  <div class="hidden" id="searchTab" style="padding:12px">
+    <input type="text" id="searchInput" placeholder="输入字符或 U+XXXX …"
+      style="width:100%;background:#1e2235;border:1px solid #2d3148;border-radius:8px;padding:8px 12px;color:#e2e8f0;font-size:.85rem;outline:none">
+    <div id="searchResult" style="margin-top:10px;font-size:.82rem"></div>
+  </div>
+
+</div><!-- /sidebar -->
+
+<!-- ══════════ MAIN ══════════ -->
+<div class="main">
+  <div class="main-tabs">
+    <div class="main-tab active" data-mtab="text">文本分析</div>
+    <div class="main-tab" data-mtab="problems">问题字符</div>
+    <div class="main-tab" data-mtab="overview">概览</div>
+  </div>
+
+  <!-- ── Text Analysis Tab ── -->
+  <div id="tabText" class="text-panel">
+    <div class="textarea-wrap">
+      <textarea id="textInput" placeholder="在此粘贴文本，或直接拖拽文本文件到此区域…"></textarea>
+    </div>
+    <div class="text-controls">
+      <button class="btn btn-primary" id="analyzeBtn" disabled>分析文本</button>
+      <button class="btn btn-outline btn-sm" id="clearTextBtn">清空</button>
+      <label class="toggle-wrap" id="dedupToggle">
+        <div class="toggle" id="dedupToggleEl"></div>
+        <span>去重分析</span>
+      </label>
+      <div class="view-mode-wrap">
+        <button class="view-mode-btn active" id="vmCells" title="字符卡片">⊞ 卡片</button>
+        <button class="view-mode-btn" id="vmInline" title="行内高亮">¶ 行内</button>
+      </div>
+    </div>
+    <div class="text-result hidden" id="textResult">
+      <div class="text-result-header">
+        <div class="result-stats" id="resultStats"></div>
+        <button class="btn btn-outline btn-sm" id="exportTextCSV">导出 CSV</button>
+      </div>
+      <div class="render-progress" id="renderProgress"></div>
+      <div id="textView"></div>
+    </div>
+    <p class="tip">💡 拖拽文本文件 (.txt) 可直接加载 · 去重开关仅影响分析，上下文提取始终基于原始文本</p>
+  </div>
+
+  <!-- ── Problems Tab ── -->
+  <div id="tabProblems" class="problem-panel hidden">
+    <div class="prob-export-row">
+      <button class="btn btn-outline btn-sm" id="exportAllCSVBtn">📥 导出全部问题字符 CSV</button>
+    </div>
+    <div class="prob-section" id="probNoGlyph">
+      <div class="prob-title"><span style="color:#fb923c">⚠ 有映射但无字形轮廓</span><span class="cnt" id="ngCount">0</span></div>
+      <div id="ngList"></div>
+    </div>
+    <div class="prob-section" id="probMissing">
+      <div class="prob-title"><span style="color:#f87171">✗ cmap 中完全缺失</span><span class="cnt" id="msCount">0</span></div>
+      <div id="msList"></div>
+    </div>
+  </div>
+
+  <!-- ── Overview Tab ── -->
+  <div id="tabOverview" class="overview-panel hidden">
+    <div class="ov-grid" id="ovGrid"></div>
+  </div>
+
+</div><!-- /main -->
+</div><!-- /layout -->
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════
+let charToGlyph    = new Map();   // cp → glyphId
+let glyphsWithData = new Set();   // glyphId (loca有数据)
+let fontLoaded     = false;
+let numGlyphs      = 0;
+
+let lastAnalyzedText = '';
+let lastNoGlyphMap   = new Map(); // cp → count
+let lastMissingMap   = new Map(); // cp → count
+
+// 🆕 位置索引（优化核心）
+let positionIndex = null;
+// { lines: string[], lineBreaks: Int32Array, cpPositions: Map<cp, number[]> }
+
+let dedupEnabled = false;
+let viewMode = 'cells'; // 'cells' | 'inline'
+let renderAbort = null; // AbortController for batched render
+
+// ═══════════════════════════════════════════════════════
+//  UNICODE BLOCKS
+// ═══════════════════════════════════════════════════════
+const UNICODE_BLOCKS = [
+  {name:'基本拉丁',r:[0x0020,0x007F]},
+  {name:'拉丁扩展',r:[0x0080,0x024F]},
+  {name:'希腊/西里尔',r:[0x0370,0x052F]},
+  {name:'中日韩统一表意（基本）',r:[0x4E00,0x9FFF]},
+  {name:'CJK 扩展 A',r:[0x3400,0x4DBF]},
+  {name:'CJK 扩展 B',r:[0x20000,0x2A6DF]},
+  {name:'CJK 兼容',r:[0xF900,0xFAFF]},
+  {name:'注音/拼音',r:[0x02B0,0x02FF]},
+  {name:'标点与符号',r:[0x2000,0x206F]},
+  {name:'CJK 符号与标点',r:[0x3000,0x303F]},
+  {name:'全角/半角',r:[0xFF00,0xFFEF]},
+  {name:'平假名',r:[0x3040,0x309F]},
+  {name:'片假名',r:[0x30A0,0x30FF]},
+  {name:'朝鲜谚文',r:[0xAC00,0xD7AF]},
+  {name:'泰文',r:[0x0E00,0x0E7F]},
+  {name:'阿拉伯文',r:[0x0600,0x06FF]},
+  {name:'希伯来文',r:[0x0590,0x05FF]},
+  {name:'数学运算符',r:[0x2200,0x22FF]},
+];
+
+// ═══════════════════════════════════════════════════════
+//  TTF PARSER
+// ═══════════════════════════════════════════════════════
+async function parseTTF(buffer) {
+  const dv = new DataView(buffer);
+  const u16 = (o)=>dv.getUint16(o,false);
+  const u32 = (o)=>dv.getUint32(o,false);
+  const i16 = (o)=>dv.getInt16(o,false);
+
+  setProgress(5,'读取表目录…');
+
+  // Table directory
+  const numTables = u16(4);
+  const tables = {};
+  for(let i=0;i<numTables;i++){
+    const off = 12 + i*16;
+    const tag = String.fromCharCode(
+      dv.getUint8(off),dv.getUint8(off+1),
+      dv.getUint8(off+2),dv.getUint8(off+3)
+    );
+    tables[tag] = {offset:u32(off+8), length:u32(off+12)};
+  }
+
+  setProgress(15,'解析 head 表…');
+  // head → indexToLocFormat
+  let locaFormat = 0;
+  if(tables.head){
+    locaFormat = i16(tables.head.offset + 50);
+  }
+  document.getElementById('infoLoca').textContent = locaFormat===0?'short (16-bit)':'long (32-bit)';
+
+  setProgress(25,'解析 maxp 表…');
+  if(tables.maxp){
+    numGlyphs = u16(tables.maxp.offset + 4);
+  }
+  document.getElementById('infoGlyphs').textContent = numGlyphs.toLocaleString();
+
+  setProgress(35,'解析 cmap 表…');
+  charToGlyph = new Map();
+  if(tables.cmap){
+    parseCmap(dv, tables.cmap.offset);
+  }
+  document.getElementById('infoCmap').textContent = charToGlyph.size.toLocaleString();
+
+  setProgress(60,'解析 loca / glyf 表…');
+  glyphsWithData = new Set();
+  if(tables.loca && tables.glyf){
+    parseLoca(dv, tables.loca.offset, locaFormat, numGlyphs, tables.glyf.offset);
+  }
+  document.getElementById('infoGlyphData').textContent = glyphsWithData.size.toLocaleString();
+
+  setProgress(80,'解析 name 表…');
+  let fontName = '未知字体';
+  if(tables.name){
+    fontName = parseName(dv, tables.name.offset) || fontName;
+  }
+  document.getElementById('fontName').textContent = fontName;
+
+  setProgress(100,'完成');
+}
+
+function parseCmap(dv, cmapOffset){
+  const u16=(o)=>dv.getUint16(o,false);
+  const u32=(o)=>dv.getUint32(o,false);
+  const numSubtables = u16(cmapOffset+2);
+  let bestOffset=0, bestPriority=-1;
+
+  for(let i=0;i<numSubtables;i++){
+    const base = cmapOffset+4+i*8;
+    const platformId=u16(base), encId=u16(base+2);
+    const offset=u32(base+4);
+    const fmt=u16(cmapOffset+offset);
+    let priority=-1;
+    if(platformId===0) priority=10+encId;
+    else if(platformId===3&&encId===10) priority=9;
+    else if(platformId===3&&encId===1) priority=8;
+    else if(platformId===1) priority=5;
+    if((fmt===4||fmt===12)&&priority>bestPriority){
+      bestPriority=priority; bestOffset=cmapOffset+offset;
+    }
+  }
+
+  if(!bestOffset) return;
+  const fmt=u16(bestOffset);
+
+  if(fmt===4){
+    const segCount=u16(bestOffset+6)/2;
+    const endBase=bestOffset+14, startBase=endBase+segCount*2+2;
+    const deltaBase=startBase+segCount*2, rangeBase=deltaBase+segCount*2;
+    for(let i=0;i<segCount;i++){
+      const end=u16(endBase+i*2), start=u16(startBase+i*2);
+      const delta=dv.getInt16(deltaBase+i*2,false);
+      const rangeOffset=u16(rangeBase+i*2);
+      if(start===0xFFFF) break;
+      for(let c=start;c<=end;c++){
+        let gid;
+        if(rangeOffset===0){
+          gid=(c+delta)&0xFFFF;
+        } else {
+          const idx=rangeBase+i*2+rangeOffset+(c-start)*2;
+          if(idx+2>dv.byteLength) continue;
+          gid=u16(idx);
+          if(gid!==0) gid=(gid+delta)&0xFFFF;
+        }
+        if(gid!==0) charToGlyph.set(c,gid);
+      }
+    }
+  } else if(fmt===12){
+    const nGroups=u32(bestOffset+12);
+    for(let i=0;i<nGroups;i++){
+      const base=bestOffset+16+i*12;
+      const startCp=u32(base), endCp=u32(base+4), startGid=u32(base+8);
+      for(let c=startCp;c<=endCp;c++){
+        charToGlyph.set(c, startGid+(c-startCp));
+      }
+    }
+  }
+}
+
+function parseLoca(dv, locaOffset, fmt, nGlyphs, glyfOffset){
+  for(let i=0;i<nGlyphs;i++){
+    let off, next;
+    if(fmt===0){
+      off  = dv.getUint16(locaOffset+i*2,false)*2;
+      next = dv.getUint16(locaOffset+(i+1)*2,false)*2;
+    } else {
+      off  = dv.getUint32(locaOffset+i*4,false);
+      next = dv.getUint32(locaOffset+(i+1)*4,false);
+    }
+    if(next>off) glyphsWithData.add(i);
+  }
+}
+
+function parseName(dv, nameOffset){
+  const count=dv.getUint16(nameOffset+2,false);
+  const strOff=dv.getUint16(nameOffset+4,false);
+  const dec=new TextDecoder('utf-16be');
+  for(let i=0;i<count;i++){
+    const b=nameOffset+6+i*12;
+    const platformId=dv.getUint16(b,false);
+    const nameId=dv.getUint16(b+6,false);
+    const len=dv.getUint16(b+8,false);
+    const off=dv.getUint16(b+10,false);
+    if(nameId===4&&platformId===3){
+      try{
+        return dec.decode(new Uint8Array(dv.buffer, nameOffset+strOff+off, len));
+      }catch(e){}
+    }
+  }
+  for(let i=0;i<count;i++){
+    const b=nameOffset+6+i*12;
+    const nameId=dv.getUint16(b+6,false);
+    const len=dv.getUint16(b+8,false);
+    const off=dv.getUint16(b+10,false);
+    if(nameId===4){
+      try{
+        return new TextDecoder().decode(new Uint8Array(dv.buffer, nameOffset+strOff+off, len));
+      }catch(e){}
+    }
+  }
+  return null;
+}
+
+// ═══════════════════════════════════════════════════════
+//  🆕 POSITION INDEX（核心优化）
+// ═══════════════════════════════════════════════════════
+function buildPositionIndex(text){
+  // 1. split lines
+  const lines = text.split('\n');
+
+  // 2. 预计算每行起始绝对偏移
+  const lineBreaks = new Int32Array(lines.length);
+  let offset = 0;
+  for(let i=0;i<lines.length;i++){
+    lineBreaks[i] = offset;
+    offset += lines[i].length + 1; // +1 for '\n'
+  }
+
+  // 3. 倒排索引：cp → [absPos, ...]
+  const cpPositions = new Map();
+  let pos = 0;
+  for(const ch of text){
+    const cp = ch.codePointAt(0);
+    if(!cpPositions.has(cp)) cpPositions.set(cp,[]);
+    cpPositions.get(cp).push(pos);
+    pos += ch.length; // 代理对占2个UTF-16单元
+  }
+
+  return { lines, lineBreaks, cpPositions };
+}
+
+// 二分查找所属行
+function findLineIndex(lineBreaks, absPos){
+  let lo=0, hi=lineBreaks.length-1;
+  while(lo<hi){
+    const mid=(lo+hi+1)>>1;
+    if(lineBreaks[mid]<=absPos) lo=mid; else hi=mid-1;
+  }
+  return lo;
+}
+
+// 🆕 extractContextsFast —— O(k) 而非 O(N)
+function extractContextsFast(cp, maxSnippets=3){
+  if(!positionIndex) return [];
+  const {lines, lineBreaks, cpPositions} = positionIndex;
+  const positions = cpPositions.get(cp);
+  if(!positions||positions.length===0) return [];
+
+  const CTX=7;
+  const results=[];
+  const usedLines=new Set();
+  const charStr = String.fromCodePoint(cp);
+  const charLen = charStr.length;
+
+  for(const absPos of positions){
+    if(results.length>=maxSnippets) break;
+    const lineIdx = findLineIndex(lineBreaks, absPos);
+    if(usedLines.has(lineIdx)) continue;
+    usedLines.add(lineIdx);
+
+    const line = lines[lineIdx];
+    const col  = absPos - lineBreaks[lineIdx];
+
+    // 安全取上下文
+    const start = Math.max(0, col-CTX);
+    const end   = Math.min(line.length, col+charLen+CTX);
+
+    results.push({
+      before: line.slice(start, col),
+      after:  line.slice(col+charLen, end),
+      lineNo: lineIdx+1
+    });
+  }
+  return results;
+}
+
+// ═══════════════════════════════════════════════════════
+//  CHAR STATE
+// ═══════════════════════════════════════════════════════
+function getCharState(cp){
+  const gid = charToGlyph.get(cp);
+  if(gid===undefined) return 'missing';
+  if(!glyphsWithData.has(gid)) return 'no-glyph';
+  return 'supported';
+}
+
+// ═══════════════════════════════════════════════════════
+//  🆕 DEDUP（Array + join，避免字符串反复拷贝）
+// ═══════════════════════════════════════════════════════
+function deduplicateText(text){
+  const seen=new Set();
+  const result=[];
+  let dedupCount=0;
+  for(const ch of text){
+    if(!seen.has(ch)){seen.add(ch);result.push(ch);}
+    else dedupCount++;
+  }
+  return {text:result.join(''), dedupCount};
+}
+
+// ═══════════════════════════════════════════════════════
+//  ANALYZE TEXT
+// ═══════════════════════════════════════════════════════
+function analyzeText(){
+  if(!fontLoaded) return;
+  let rawText = document.getElementById('textInput').value;
+  if(!rawText.trim()) return;
+
+  // ① 保存原始文本（上下文提取用）
+  lastAnalyzedText = rawText;
+
+  // ② 去重（优化版）
+  let analyzeStr = rawText;
+  let dedupInfo = '';
+  if(dedupEnabled){
+    const {text, dedupCount} = deduplicateText(rawText);
+    analyzeStr = text;
+    if(dedupCount>0) dedupInfo = `（已去除 ${dedupCount.toLocaleString()} 个重复字符）`;
+  }
+
+  // ③ 统计
+  lastNoGlyphMap = new Map();
+  lastMissingMap = new Map();
+  let supported=0, noGlyph=0, missing=0;
+
+  for(const ch of analyzeStr){
+    const cp = ch.codePointAt(0);
+    if(cp===0x0A||cp===0x0D||cp===0x09||cp===0x20) {supported++; continue;}
+    const state = getCharState(cp);
+    if(state==='supported') supported++;
+    else if(state==='no-glyph'){
+      noGlyph++;
+      lastNoGlyphMap.set(cp,(lastNoGlyphMap.get(cp)||0)+1);
+    } else {
+      missing++;
+      lastMissingMap.set(cp,(lastMissingMap.get(cp)||0)+1);
+    }
+  }
+
+  // ④ 🆕 建立位置索引（基于原始文本）
+  positionIndex = buildPositionIndex(rawText);
+
+  // ⑤ 显示结果
+  const total = supported+noGlyph+missing;
+  const statsEl = document.getElementById('resultStats');
+  statsEl.innerHTML =
+    `共 <b>${total.toLocaleString()}</b> 字符 ${dedupInfo} &nbsp;|&nbsp; `+
+    `<span style="color:#34d399">✓ ${supported.toLocaleString()}</span> &nbsp;`+
+    `<span class="ng">⚠ ${noGlyph.toLocaleString()}</span> &nbsp;`+
+    `<span class="ms">✗ ${missing.toLocaleString()}</span>`;
+
+  document.getElementById('textResult').classList.remove('hidden');
+
+  // ⑥ 渲染（分批）
+  renderTextViewBatched(analyzeStr);
+}
+
+// ═══════════════════════════════════════════════════════
+//  🆕 BATCHED RENDER（避免主线程冻结）
+// ═══════════════════════════════════════════════════════
+const RENDER_BATCH = 1500;
+
+function renderTextViewBatched(text){
+  const container = document.getElementById('textView');
+  const progressEl = document.getElementById('renderProgress');
+  container.innerHTML = '';
+
+  // 取消上次未完成的渲染
+  if(renderAbort) renderAbort.cancelled=true;
+  const ctrl = {cancelled:false};
+  renderAbort = ctrl;
+
+  const chars = [...text]; // 正确处理代理对/emoji
+  const total = chars.length;
+
+  if(viewMode==='inline'){
+    renderInlineBatched(chars, total, container, progressEl, ctrl);
+  } else {
+    renderCellsBatched(chars, total, container, progressEl, ctrl);
+  }
+}
+
+function renderCellsBatched(chars, total, container, progressEl, ctrl){
+  const wrap = document.createElement('div');
+  wrap.className = 'char-grid';
+  container.appendChild(wrap);
+
+  let offset=0;
+  function batch(){
+    if(ctrl.cancelled) return;
+    const frag = document.createDocumentFragment();
+    const end  = Math.min(offset+RENDER_BATCH, total);
+    for(let i=offset;i<end;i++){
+      const ch=chars[i];
+      const cp=ch.codePointAt(0);
+      const state = (cp===0x0A||cp===0x0D||cp===0x20||cp===0x09)?'supported':getCharState(cp);
+      const span=document.createElement('span');
+      span.className=`char-card ${state}`;
+      span.textContent = cp===0x0A?'↵':ch;
+      span.title=`U+${cp.toString(16).toUpperCase().padStart(4,'0')} [${state}]`;
+      frag.appendChild(span);
+    }
+    wrap.appendChild(frag);
+    offset=end;
+    if(offset<total){
+      progressEl.style.display='block';
+      progressEl.textContent=`渲染中… ${offset.toLocaleString()} / ${total.toLocaleString()}`;
+      requestAnimationFrame(batch);
+    } else {
+      progressEl.style.display='none';
+    }
+  }
+  batch();
+}
+
+function renderInlineBatched(chars, total, container, progressEl, ctrl){
+  let offset=0;
+  function batch(){
+    if(ctrl.cancelled) return;
+    const frag = document.createDocumentFragment();
+    const end  = Math.min(offset+RENDER_BATCH, total);
+    for(let i=offset;i<end;i++){
+      const ch=chars[i];
+      const cp=ch.codePointAt(0);
+      if(cp===0x0A){
+        frag.appendChild(document.createElement('br'));
+        continue;
+      }
+      const state=(cp===0x0D||cp===0x20||cp===0x09)?'supported':getCharState(cp);
+      const span=document.createElement('span');
+      span.className=`ch ${state}`;
+      span.textContent=ch;
+      span.title=`U+${cp.toString(16).toUpperCase().padStart(4,'0')}`;
+      frag.appendChild(span);
+    }
+    container.appendChild(frag);
+    offset=end;
+    if(offset<total){
+      progressEl.style.display='block';
+      progressEl.textContent=`渲染中… ${offset.toLocaleString()} / ${total.toLocaleString()}`;
+      requestAnimationFrame(batch);
+    } else {
+      progressEl.style.display='none';
+    }
+  }
+  // 行内模式加 class
+  container.classList.add('inline-text');
+  container.classList.remove('char-grid');
+  batch();
+}
+
+// ═══════════════════════════════════════════════════════
+//  CSV EXPORT
+// ═══════════════════════════════════════════════════════
+function generateCSVRows(charMap, maxCtx=5){
+  const rows=[];
+  const sorted=[...charMap.entries()].sort((a,b)=>b[1]-a[1]);
+  for(const [cp] of sorted){
+    const char=String.fromCodePoint(cp);
+    const snippets=extractContextsFast(cp,maxCtx);
+    if(snippets.length){
+      for(const s of snippets){
+        const line=`${char},${s.before}${char}${s.after}`;
+        rows.push(line);
+      }
+    } else {
+      rows.push(`${char},（无上下文）`);
+    }
+  }
+  return rows;
+}
+
+function downloadCSV(content, filename){
+  const blob=new Blob(['\uFEFF'+content,],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function exportAllCSV(){
+  const lines=['# 无字形轮廓字符 (no-glyph)','字符,上下文'];
+  lines.push(...generateCSVRows(lastNoGlyphMap));
+  lines.push('','# 完全缺失字符 (missing)','字符,上下文');
+  lines.push(...generateCSVRows(lastMissingMap));
+  downloadCSV(lines.join('\n'),'font-problems.csv');
+}
+
+function exportCurrentCSV(){
+  const allMap=new Map([...lastNoGlyphMap,...lastMissingMap]);
+  const rows=generateCSVRows(allMap);
+  downloadCSV(['字符,上下文',...rows].join('\n'),'font-text-analysis.csv');
+}
+
+// ═══════════════════════════════════════════════════════
+//  PROBLEM PANEL RENDER
+// ═══════════════════════════════════════════════════════
+function renderProblemPanel(){
+  renderProbList('ngList','ngCount',lastNoGlyphMap,'no-glyph');
+  renderProbList('msList','msCount',lastMissingMap,'missing');
+}
+
+function renderProbList(listId, countId, charMap, stateClass){
+  const list=document.getElementById(listId);
+  const cnt=document.getElementById(countId);
+  cnt.textContent=charMap.size;
+  list.innerHTML='';
+  if(charMap.size===0){list.innerHTML='<p style="font-size:.78rem;color:#475569;padding:6px">暂无</p>';return;}
+
+  const sorted=[...charMap.entries()].sort((a,b)=>b[1]-a[1]);
+  for(const [cp,count] of sorted){
+    const char=String.fromCodePoint(cp);
+    const card=document.createElement('div');
+    card.className='prob-char-card';
+
+    const header=document.createElement('div');
+    header.className='prob-char-header';
+    header.innerHTML=`
+      <div class="prob-char-glyph ${stateClass}">${char}</div>
+      <div class="prob-char-info">
+        <div class="char-name">${char} &nbsp;U+${cp.toString(16).toUpperCase().padStart(4,'0')}</div>
+        <div class="char-meta">${stateClass==='no-glyph'?'有cmap映射，无字形轮廓':'cmap中不存在'}</div>
+      </div>
+      <div class="prob-char-count" style="color:${stateClass==='no-glyph'?'#fb923c':'#f87171'}">${count}×</div>
+    `;
+
+    const ctxDiv=document.createElement('div');
+    ctxDiv.className='ctx-list hidden';
+
+    header.addEventListener('click',()=>{
+      const isOpen=!ctxDiv.classList.contains('hidden');
+      if(isOpen){ctxDiv.classList.add('hidden');return;}
+      if(ctxDiv.dataset.loaded){ctxDiv.classList.remove('hidden');return;}
+
+      // 懒加载上下文
+      ctxDiv.dataset.loaded='1';
+      const snippets=extractContextsFast(cp,5);
+      if(snippets.length===0){
+        ctxDiv.innerHTML='<div class="ctx-no-data">当前文本中未检索到上下文（请先在"文本分析"Tab分析文本）</div>';
+      } else {
+        snippets.forEach(s=>{
+          const item=document.createElement('div');
+          item.className='ctx-item';
+          item.innerHTML=`
+            <div class="ctx-line">第 ${s.lineNo} 行</div>
+            ${escHtml(s.before)}<span class="ctx-highlight">${escHtml(String.fromCodePoint(cp))}</span>${escHtml(s.after)}
+          `;
+          ctxDiv.appendChild(item);
+        });
+      }
+      ctxDiv.classList.remove('hidden');
+    });
+
+    card.appendChild(header);
+    card.appendChild(ctxDiv);
+    list.appendChild(card);
+  }
+}
+
+function escHtml(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ═══════════════════════════════════════════════════════
+//  BLOCK LIST RENDER
+// ═══════════════════════════════════════════════════════
+function renderBlockList(){
+  const container=document.getElementById('blockList');
+  container.innerHTML='';
+
+  // 收集 cmap 中的所有码点
+  const allCps=[...charToGlyph.keys()];
+
+  const blockStats=[];
+  const assignedCps=new Set();
+
+  for(const blk of UNICODE_BLOCKS){
+    if(isNaN(blk.r[0])) continue;
+    const [lo,hi]=blk.r;
+    const cps=allCps.filter(cp=>cp>=lo&&cp<=hi);
+    if(cps.length===0) continue;
+    cps.forEach(cp=>assignedCps.add(cp));
+    blockStats.push({name:blk.name, cps, total:hi-lo+1});
+  }
+
+  // Other
+  const otherCps=allCps.filter(cp=>!assignedCps.has(cp));
+  if(otherCps.length) blockStats.push({name:'其他字符',cps:otherCps,total:otherCps.length});
+
+  // 更新统计
+  let totalS=0,totalN=0,totalM=0;
+  for(const cp of allCps){
+    const st=getCharState(cp);
+    if(st==='supported')totalS++;
+    else if(st==='no-glyph')totalN++;
+    else totalM++;
+  }
+  document.getElementById('statS').textContent=totalS.toLocaleString();
+  document.getElementById('statN').textContent=totalN.toLocaleString();
+  document.getElementById('statM').textContent=totalM.toLocaleString();
+  document.getElementById('statsGrid').classList.remove('hidden');
+  document.getElementById('fontInfo').classList.remove('hidden');
+
+  // 渲染各块
+  for(const blk of blockStats){
+    const supported=blk.cps.filter(cp=>getCharState(cp)==='supported').length;
+    const pct=Math.round(supported/blk.cps.length*100);
+
+    const item=document.createElement('div');
+    item.className='block-item';
+    item.innerHTML=`
+      <div class="block-header">
+        <span class="block-name">${blk.name}</span>
+        <span class="block-pct">${supported}/${blk.cps.length} (${pct}%)</span>
+        <span style="color:#475569;font-size:.7rem">▾</span>
+      </div>
+      <div class="block-bar-wrap" style="display:none">
+        <div class="block-bar" style="width:${pct}%"></div>
+      </div>
+      <div class="block-chars" style="display:none"></div>
+    `;
+
+    const header=item.querySelector('.block-header');
+    const barWrap=item.querySelector('.block-bar-wrap');
+    const charsDiv=item.querySelector('.block-chars');
+    let expanded=false;
+
+    header.addEventListener('click',()=>{
+      expanded=!expanded;
+      barWrap.style.display=expanded?'block':'none';
+      charsDiv.style.display=expanded?'flex':'none';
+      header.querySelector('span:last-child').textContent=expanded?'▴':'▾';
+      if(expanded&&charsDiv.children.length===0){
+        // 懒渲染字符
+        const frag=document.createDocumentFragment();
+        for(const cp of blk.cps.sort((a,b)=>a-b)){
+          const st=getCharState(cp);
+          const span=document.createElement('span');
+          span.className=`c-cell ${st}`;
+          span.textContent=String.fromCodePoint(cp);
+          span.title=`U+${cp.toString(16).toUpperCase().padStart(4,'0')} [${st}]`;
+          frag.appendChild(span);
+        }
+        charsDiv.appendChild(frag);
+      }
+    });
+
+    container.appendChild(item);
+  }
+
+  // Overview
+  renderOverview(blockStats, totalS, totalN, totalM);
+}
+
+// ═══════════════════════════════════════════════════════
+//  OVERVIEW
+// ═══════════════════════════════════════════════════════
+function renderOverview(blockStats,totalS,totalN,totalM){
+  const grid=document.getElementById('ovGrid');
+  const total=totalS+totalN+totalM;
+  const coverage=total?Math.round(totalS/total*100):0;
+  grid.innerHTML=`
+    <div class="ov-card"><div class="ov-label">cmap 总映射</div><div class="ov-val">${total.toLocaleString()}</div><div class="ov-sub">Unicode 码点</div></div>
+    <div class="ov-card"><div class="ov-label">有字形数据</div><div class="ov-val" style="color:#34d399">${totalS.toLocaleString()}</div><div class="ov-sub">覆盖率 ${coverage}%</div></div>
+    <div class="ov-card"><div class="ov-label">无字形轮廓</div><div class="ov-val" style="color:#fb923c">${totalN.toLocaleString()}</div><div class="ov-sub">映射但无数据</div></div>
+    <div class="ov-card"><div class="ov-label">Unicode 块数</div><div class="ov-val">${blockStats.length}</div><div class="ov-sub">含字符的块</div></div>
+    <div class="ov-card"><div class="ov-label">字形总数</div><div class="ov-val">${numGlyphs.toLocaleString()}</div><div class="ov-sub">maxp 表</div></div>
+    <div class="ov-card"><div class="ov-label">有数据字形</div><div class="ov-val">${glyphsWithData.size.toLocaleString()}</div><div class="ov-sub">loca/glyf 表</div></div>
+  `;
+}
+
+// ═══════════════════════════════════════════════════════
+//  PROGRESS HELPER
+// ═══════════════════════════════════════════════════════
+function setProgress(pct, label){
+  const wrap=document.getElementById('progressWrap');
+  wrap.style.display='block';
+  document.getElementById('progressFill').style.width=pct+'%';
+  document.getElementById('progressLabel').textContent=label;
+  if(pct>=100){
+    setTimeout(()=>{wrap.style.display='none';},800);
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  EVENT WIRING
+// ═══════════════════════════════════════════════════════
+// File load
+async function loadFont(buffer, filename){
+  document.getElementById('uploadName').textContent=filename;
+  fontLoaded=false;
+  document.getElementById('analyzeBtn').disabled=true;
+  try{
+    await parseTTF(buffer);
+    fontLoaded=true;
+    renderBlockList();
+    document.getElementById('analyzeBtn').disabled=false;
+  }catch(e){
+    alert('解析失败：'+e.message);
+    console.error(e);
+  }
+}
+
+document.getElementById('fileInput').addEventListener('change',e=>{
+  const f=e.target.files[0];
+  if(!f)return;
+  const reader=new FileReader();
+  reader.onload=ev=>loadFont(ev.target.result,f.name);
+  reader.readAsArrayBuffer(f);
+});
+
+// Drag on upload zone
+const upZone=document.getElementById('uploadZone');
+upZone.addEventListener('dragover',e=>{e.preventDefault();upZone.classList.add('drag');});
+upZone.addEventListener('dragleave',()=>upZone.classList.remove('drag'));
+upZone.addEventListener('drop',e=>{
+  e.preventDefault();upZone.classList.remove('drag');
+  const f=e.dataTransfer.files[0];
+  if(!f)return;
+  const reader=new FileReader();
+  reader.onload=ev=>loadFont(ev.target.result,f.name);
+  reader.readAsArrayBuffer(f);
+});
+
+// Drag text file onto textarea
+const ta=document.getElementById('textInput');
+ta.addEventListener('dragover',e=>{e.preventDefault();ta.classList.add('drag-over');});
+ta.addEventListener('dragleave',()=>ta.classList.remove('drag-over'));
+ta.addEventListener('drop',e=>{
+  e.preventDefault();ta.classList.remove('drag-over');
+  const f=e.dataTransfer.files[0];
+  if(f&&f.type.startsWith('text')){
+    const reader=new FileReader();
+    reader.onload=ev=>{ta.value=ev.target.result;};
+    reader.readAsText(f,'utf-8');
+  } else if(e.dataTransfer.getData('text')){
+    ta.value=e.dataTransfer.getData('text');
+  }
+});
+
+// Auto-load demo font
+(async()=>{
+  const url='https://aichat-1258567330.cos.ap-singapore.myqcloud.com/files/492898/d8e2998a-b4b8-4f99-8f28-cd866bf0aea0.ttf';
+  try{
+    setProgress(2,'自动加载演示字体…');
+    const resp=await fetch(url);
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    const buf=await resp.arrayBuffer();
+    await loadFont(buf,'DefaultFont_VIET.ttf');
+  }catch(e){
+    document.getElementById('progressWrap').style.display='none';
+    console.warn('自动加载失败，请手动选择字体文件',e);
+  }
+})();
+
+// Analyze button
+document.getElementById('analyzeBtn').addEventListener('click',analyzeText);
+
+// Clear
+document.getElementById('clearTextBtn').addEventListener('click',()=>{
+  ta.value='';
+  document.getElementById('textResult').classList.add('hidden');
+  lastAnalyzedText='';
+  lastNoGlyphMap=new Map();
+  lastMissingMap=new Map();
+  positionIndex=null;
+});
+
+// Dedup toggle
+document.getElementById('dedupToggle').addEventListener('click',()=>{
+  dedupEnabled=!dedupEnabled;
+  document.getElementById('dedupToggleEl').classList.toggle('on',dedupEnabled);
+});
+
+// View mode
+document.getElementById('vmCells').addEventListener('click',()=>{
+  viewMode='cells';
+  document.getElementById('vmCells').classList.add('active');
+  document.getElementById('vmInline').classList.remove('active');
+  const tv=document.getElementById('textView');
+  tv.classList.remove('inline-text');
+  if(lastAnalyzedText) analyzeText();
+});
+document.getElementById('vmInline').addEventListener('click',()=>{
+  viewMode='inline';
+  document.getElementById('vmInline').classList.add('active');
+  document.getElementById('vmCells').classList.remove('active');
+  if(lastAnalyzedText) analyzeText();
+});
+
+// Export buttons
+document.getElementById('exportTextCSV').addEventListener('click',exportCurrentCSV);
+document.getElementById('exportAllCSVBtn').addEventListener('click',exportAllCSV);
+
+// Sidebar tabs
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    const t=tab.dataset.tab;
+    document.getElementById('blockList').classList.toggle('hidden',t!=='blocks');
+    document.getElementById('searchTab').classList.toggle('hidden',t!=='search');
+  });
+});
+
+// Main tabs
+document.querySelectorAll('.main-tab').forEach(tab=>{
+  tab.addEventListener('click',()=>{
+    document.querySelectorAll('.main-tab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    const t=tab.dataset.mtab;
+    document.getElementById('tabText').classList.toggle('hidden',t!=='text');
+    document.getElementById('tabProblems').classList.toggle('hidden',t!=='problems');
+    document.getElementById('tabOverview').classList.toggle('hidden',t!=='overview');
+    if(t==='problems') renderProblemPanel();
+  });
+});
+
+// Search
+document.getElementById('searchInput').addEventListener('input',e=>{
+  if(!fontLoaded) return;
+  const raw=e.target.value.trim();
+  const result=document.getElementById('searchResult');
+  if(!raw){result.innerHTML='';return;}
+
+  let cp;
+  const hexMatch=raw.match(/^[Uu]\+?([0-9A-Fa-f]{1,6})$/);
+  if(hexMatch) cp=parseInt(hexMatch[1],16);
+  else cp=raw.codePointAt(0);
+
+  if(isNaN(cp)||cp<0){result.innerHTML='<span style="color:#f87171">无效输入</span>';return;}
+
+  const ch=String.fromCodePoint(cp);
+  const state=getCharState(cp);
+  const stateText={'supported':'✓ 支持（有字形数据）','no-glyph':'⚠ 有映射但无字形轮廓','missing':'✗ cmap 中不存在'};
+  const stateColor={'supported':'#34d399','no-glyph':'#fb923c','missing':'#f87171'};
+
+  result.innerHTML=`
+    <div style="background:#1e2235;border-radius:8px;padding:12px">
+      <div style="font-size:2rem;text-align:center;margin-bottom:8px">${ch}</div>
+      <div style="font-size:.78rem;color:#94a3b8">码点：U+${cp.toString(16).toUpperCase().padStart(4,'0')}</div>
+      <div style="font-size:.78rem;margin-top:4px;color:${stateColor[state]}">${stateText[state]}</div>
+      ${charToGlyph.has(cp)?`<div style="font-size:.72rem;color:#475569;margin-top:3px">Glyph ID: ${charToGlyph.get(cp)}</div>`:''}
+    </div>
+  `;
+});
+</script>
+</body>
+</html>

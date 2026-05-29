@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>字体字符集分析</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:system-ui,sans-serif; background:#0f1117; color:#e2e8f0; min-height:100vh; }
+
+.header { background:linear-gradient(135deg,#1a1f36,#2d3561); padding:20px 32px; border-bottom:1px solid #2d3748; display:flex; align-items:center; gap:16px; }
+.header-icon { font-size:2rem; }
+.header h1 { font-size:1.4rem; font-weight:700; color:#fff; }
+.header p  { font-size:.85rem; color:#94a3b8; margin-top:2px; }
+
+.upload-area { margin:32px auto; max-width:600px; border:2px dashed #4a5568; border-radius:16px; padding:48px 32px; text-align:center; cursor:pointer; transition:all .3s; background:#1a1f2e; }
+.upload-area:hover,.upload-area.dragging { border-color:#667eea; background:#1e2340; }
+.upload-icon { font-size:3rem; margin-bottom:16px; }
+.upload-area h2 { font-size:1.1rem; color:#cbd5e0; margin-bottom:8px; }
+.upload-area p  { color:#718096; font-size:.875rem; }
+.upload-area input { display:none; }
+.btn-upload { display:inline-block; margin-top:16px; background:linear-gradient(135deg,#667eea,#764ba2); color:#fff; border:none; padding:10px 24px; border-radius:8px; cursor:pointer; font-size:.9rem; font-weight:600; }
+
+.loading { text-align:center; padding:60px; }
+.spinner { width:48px; height:48px; border:4px solid #2d3748; border-top-color:#667eea; border-radius:50%; animation:spin .8s linear infinite; margin:0 auto 16px; }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+.stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:16px; padding:24px 32px 0; }
+.stat-card { background:#1a1f2e; border:1px solid #2d3748; border-radius:12px; padding:20px; text-align:center; }
+.stat-value { font-size:1.8rem; font-weight:800; }
+.stat-label { font-size:.78rem; color:#718096; margin-top:4px; }
+.stat-green  { color:#48bb78; }
+.stat-orange { color:#ecc94b; }
+.stat-blue   { color:#667eea; }
+.stat-gray   { color:#94a3b8; }
+
+.tabs { display:flex; gap:8px; padding:20px 32px 0; flex-wrap:wrap; }
+.tab { padding:8px 18px; border-radius:20px; cursor:pointer; font-size:.85rem; font-weight:600; background:#1a1f2e; border:1px solid #2d3748; color:#94a3b8; transition:all .2s; }
+.tab.active { background:#667eea; border-color:#667eea; color:#fff; }
+.tab:hover:not(.active) { border-color:#667eea; color:#667eea; }
+.tab .badge { display:inline-block; background:rgba(255,255,255,.2); border-radius:10px; padding:1px 7px; font-size:.75rem; margin-left:6px; }
+
+.content-area { padding:20px 32px 32px; }
+
+.char-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(64px,1fr)); gap:6px; }
+.char-cell { background:#1a1f2e; border:1px solid #2d3748; border-radius:8px; padding:8px 4px; text-align:center; cursor:pointer; transition:all .15s; position:relative; }
+.char-cell:hover { transform:scale(1.06); z-index:5; }
+.char-cell.state-supported:hover { border-color:#48bb78; background:#1a2e22; }
+.char-cell.state-no-glyph { border-color:#744210; background:#221a06; }
+.char-cell.state-no-glyph:hover { border-color:#ecc94b; }
+.char-cell.state-missing  { border-color:#742a2a; background:#2d1515; }
+.char-cell.state-missing:hover  { border-color:#fc8181; }
+.char-glyph { font-size:1.5rem; line-height:1.4; display:block; min-height:34px; }
+.char-cell.state-no-glyph .char-glyph { color:#ecc94b; }
+.char-cell.state-missing  .char-glyph { color:#fc8181; }
+.char-code { font-size:.6rem; color:#718096; font-family:monospace; }
+.cell-state-icon { position:absolute; top:3px; right:5px; font-size:.6rem; }
+.cell-state-icon.no-glyph { color:#ecc94b; }
+.cell-state-icon.missing   { color:#fc8181; }
+
+.tooltip { position:fixed; background:#2d3748; border:1px solid #4a5568; border-radius:8px; padding:8px 12px; font-size:.8rem; color:#e2e8f0; pointer-events:none; z-index:9999; display:none; max-width:200px; }
+
+.filter-bar { display:flex; gap:12px; margin-bottom:20px; flex-wrap:wrap; align-items:center; }
+.search-input { background:#1a1f2e; border:1px solid #2d3748; border-radius:8px; padding:8px 14px; color:#e2e8f0; font-size:.875rem; outline:none; flex:1; min-width:200px; }
+.search-input:focus { border-color:#667eea; }
+.search-input::placeholder { color:#4a5568; }
+
+.page-controls { display:flex; gap:8px; align-items:center; margin-top:16px; flex-wrap:wrap; }
+.page-btn { background:#1a1f2e; border:1px solid #2d3748; border-radius:6px; padding:6px 12px; color:#94a3b8; cursor:pointer; font-size:.8rem; }
+.page-btn:hover { border-color:#667eea; color:#667eea; }
+.page-btn.active { background:#667eea; border-color:#667eea; color:#fff; }
+.page-info { color:#718096; font-size:.85rem; }
+
+.unicode-block { margin-bottom:28px; }
+.block-header { display:flex; align-items:center; justify-content:space-between; background:#1a1f2e; border:1px solid #2d3748; border-radius:8px; padding:10px 16px; margin-bottom:12px; cursor:pointer; }
+.block-header:hover { border-color:#667eea; }
+.block-chars { display:none; }
+.block-chars.open { display:grid; }
+
+.font-preview-section { background:#1a1f2e; border:1px solid #2d3748; border-radius:12px; padding:20px; margin-bottom:20px; }
+.preview-text { font-size:1.5rem; line-height:2; color:#e2e8f0; word-break:break-all; min-height:60px; border:1px dashed #2d3748; border-radius:8px; padding:12px; margin-top:12px; }
+.preview-label { font-size:.8rem; color:#718096; margin-bottom:4px; }
+
+/* ====== 文本分析 ====== */
+.text-panel { background:#1a1f2e; border:1px solid #2d3748; border-radius:14px; overflow:hidden; margin-bottom:24px; }
+.text-drop-zone { position:relative; transition:background .2s; }
+.text-drop-zone.drag-over { background:#1e2340; outline:2px dashed #667eea; outline-offset:-2px; }
+.text-drop-overlay { display:none; position:absolute; inset:0; z-index:10; background:rgba(102,126,234,.15); border-radius:14px; align-items:center; justify-content:center; flex-direction:column; gap:8px; pointer-events:none; }
+.text-drop-zone.drag-over .text-drop-overlay { display:flex; }
+.drop-overlay-icon { font-size:2.4rem; }
+.drop-overlay-text { font-size:1rem; font-weight:700; color:#667eea; }
+.text-input-area { width:100%; min-height:110px; background:transparent; border:none; outline:none; resize:none; color:#e2e8f0; font-size:1rem; padding:18px 20px 12px; line-height:1.7; font-family:system-ui,sans-serif; }
+.text-input-area::placeholder { color:#4a5568; }
+.text-toolbar { display:flex; align-items:center; justify-content:space-between; padding:10px 16px; border-top:1px solid #2d3748; flex-wrap:wrap; gap:10px; background:#161b27; }
+.toolbar-left  { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.toolbar-right { display:flex; gap:12px; align-items:center; }
+.toolbar-btn { background:#2d3748; border:1px solid #4a5568; border-radius:6px; padding:5px 12px; color:#94a3b8; cursor:pointer; font-size:.8rem; transition:all .15s; }
+.toolbar-btn:hover { border-color:#667eea; color:#667eea; }
+.toolbar-btn.primary { background:#667eea; border-color:#667eea; color:#fff; }
+.toolbar-btn.primary:hover { opacity:.85; }
+.toolbar-btn.danger:hover { border-color:#fc8181; color:#fc8181; }
+.char-counter { font-size:.78rem; color:#718096; }
+
+.dedup-wrap { display:flex; align-items:center; gap:8px; user-select:none; cursor:pointer; }
+.dedup-wrap input { display:none; }
+.toggle-track { width:36px; height:20px; background:#2d3748; border-radius:10px; position:relative; transition:background .2s; flex-shrink:0; border:1px solid #4a5568; }
+.toggle-thumb { width:14px; height:14px; background:#718096; border-radius:50%; position:absolute; top:2px; left:2px; transition:all .2s; }
+.dedup-wrap input:checked ~ .toggle-track { background:#667eea; border-color:#667eea; }
+.dedup-wrap input:checked ~ .toggle-track .toggle-thumb { left:18px; background:#fff; }
+.dedup-label { font-size:.8rem; color:#94a3b8; }
+
+.analysis-result { padding:0 2px; }
+.result-summary { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:18px; }
+.result-badge { display:flex; align-items:center; gap:7px; background:#161b27; border:1px solid #2d3748; border-radius:8px; padding:8px 14px; font-size:.85rem; }
+.badge-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.dot-supported { background:#48bb78; }
+.dot-no-glyph  { background:#ecc94b; }
+.dot-missing   { background:#fc8181; }
+.dot-space     { background:#4a5568; }
+.badge-num   { font-weight:700; color:#e2e8f0; }
+.badge-label { color:#718096; }
+.dedup-info { background:#1a2035; border:1px solid #2d4a7a; border-radius:8px; padding:8px 14px; font-size:.8rem; color:#90cdf4; margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+
+.view-toggle { display:flex; gap:8px; margin-bottom:14px; }
+.vtbtn { padding:5px 14px; border-radius:6px; cursor:pointer; font-size:.8rem; font-weight:600; background:#1a1f2e; border:1px solid #2d3748; color:#718096; transition:all .2s; }
+.vtbtn.active { background:#2d3748; border-color:#667eea; color:#667eea; }
+
+.char-analysis-row { display:flex; flex-wrap:wrap; gap:5px; }
+.ca-cell { display:flex; flex-direction:column; align-items:center; border-radius:8px; padding:7px 5px; min-width:50px; max-width:60px; border:1px solid transparent; transition:all .15s; cursor:default; }
+.ca-cell:hover { transform:scale(1.1); z-index:10; }
+.ca-cell.supported { border-color:#2f855a; background:#1a2e22; }
+.ca-cell.no-glyph  { border-color:#744210; background:#221a06; }
+.ca-cell.missing   { border-color:#742a2a; background:#2d1515; }
+.ca-cell.space     { border-color:#2d3748; background:#1a1f2e; opacity:.55; }
+.ca-glyph { font-size:1.3rem; line-height:1.4; min-height:30px; display:flex; align-items:center; justify-content:center; }
+.ca-glyph.supported { color:#9ae6b4; }
+.ca-glyph.no-glyph  { color:#ecc94b; }
+.ca-glyph.missing   { color:#fc8181; }
+.ca-glyph.space     { color:#4a5568; font-size:.9rem; }
+.ca-code   { font-size:.58rem; font-family:monospace; color:#718096; margin-top:2px; }
+.ca-status { font-size:.58rem; margin-top:1px; font-weight:600; }
+.ca-status.supported { color:#48bb78; }
+.ca-status.no-glyph  { color:#ecc94b; }
+.ca-status.missing   { color:#fc8181; }
+.ca-status.space     { color:#4a5568; }
+
+.inline-render { font-size:1.25rem; line-height:2.2; word-break:break-all; padding:14px; background:#131720; border:1px dashed #2d3748; border-radius:8px; margin-top:12px; }
+.char-ok  { color:#9ae6b4; }
+.char-ng  { color:#ecc94b; border-bottom:2px dashed #ecc94b; }
+.char-bad { color:#fc8181; text-decoration:underline wavy #fc8181; }
+.char-sp  { color:#4a5568; }
+.inline-legend { display:flex; gap:18px; margin-top:10px; font-size:.8rem; flex-wrap:wrap; }
+.inline-legend span { display:flex; align-items:center; gap:5px; color:#94a3b8; }
+
+/* ====== 问题字符面板 ====== */
+.issue-panels { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:16px; }
+@media(max-width:680px){ .issue-panels { grid-template-columns:1fr; } }
+
+.issue-panel { border-radius:12px; overflow:hidden; }
+.issue-panel.no-glyph { border:1px solid #744210; }
+.issue-panel.missing  { border:1px solid #742a2a; }
+
+.issue-panel-head { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; font-size:.82rem; font-weight:700; flex-wrap:wrap; gap:6px; }
+.issue-panel.no-glyph .issue-panel-head { background:#2a2006; color:#ecc94b; }
+.issue-panel.missing  .issue-panel-head { background:#2a1010; color:#fc8181; }
+
+/* 面板内导出按钮 */
+.panel-export-btn {
+  display:inline-flex; align-items:center; gap:5px;
+  font-size:.72rem; font-weight:600; padding:3px 10px; border-radius:5px;
+  cursor:pointer; transition:all .15s; border:1px solid; margin-left:auto;
+  white-space:nowrap;
+}
+.issue-panel.no-glyph .panel-export-btn { border-color:#744210; color:#a07820; background:#1c1606; }
+.issue-panel.no-glyph .panel-export-btn:hover { background:#3a2a08; color:#ecc94b; border-color:#ecc94b; }
+.issue-panel.missing  .panel-export-btn { border-color:#742a2a; color:#a05050; background:#180d0d; }
+.issue-panel.missing  .panel-export-btn:hover { background:#2d1515; color:#fc8181; border-color:#fc8181; }
+
+.issue-text-row { display:flex; align-items:baseline; flex-wrap:wrap; gap:6px; padding:8px 14px; border-top:1px solid; font-size:.88rem; line-height:1.8; }
+.issue-panel.no-glyph .issue-text-row { border-color:#3a2a08; background:#1c1606; }
+.issue-panel.missing  .issue-text-row { border-color:#3a1515; background:#180d0d; }
+
+.issue-char-tag { display:inline-flex; align-items:center; gap:4px; border-radius:6px; padding:2px 8px; font-weight:700; flex-shrink:0; }
+.issue-panel.no-glyph .issue-char-tag { background:#3a2a08; color:#ecc94b; border:1px solid #744210; }
+.issue-panel.missing  .issue-char-tag { background:#2d1515; color:#fc8181; border:1px solid #742a2a; }
+.char-tag-glyph { font-size:1.1rem; line-height:1; }
+.char-tag-code  { font-size:.6rem; font-family:monospace; opacity:.7; }
+.char-tag-cnt   { font-size:.65rem; opacity:.6; }
+
+.ctx-snippets { display:flex; flex-direction:column; gap:3px; flex:1; min-width:0; }
+.ctx-line { font-family:system-ui,sans-serif; font-size:.85rem; color:#94a3b8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ctx-before { color:#718096; }
+.ctx-target-ng  { color:#ecc94b; font-weight:700; padding:0 1px; border-bottom:2px solid #ecc94b; }
+.ctx-target-bad { color:#fc8181; font-weight:700; padding:0 1px; text-decoration:underline wavy #fc8181; }
+.ctx-after  { color:#718096; }
+.ctx-more   { font-size:.72rem; color:#4a5568; font-style:italic; }
+
+.issue-text-block { padding:10px 14px; border-top:1px solid; }
+.issue-panel.no-glyph .issue-text-block { border-color:#3a2a08; background:#171005; }
+.issue-panel.missing  .issue-text-block { border-color:#3a1515; background:#130808; }
+.text-block-label { font-size:.72rem; font-weight:600; margin-bottom:6px; display:flex; align-items:center; gap:6px; }
+.issue-panel.no-glyph .text-block-label { color:#a07820; }
+.issue-panel.missing  .text-block-label { color:#a05050; }
+.text-block-copy-btn { margin-left:auto; cursor:pointer; font-size:.7rem; padding:2px 8px; border-radius:4px; border:1px solid; transition:all .15s; }
+.issue-panel.no-glyph .text-block-copy-btn { border-color:#744210; color:#a07820; background:transparent; }
+.issue-panel.no-glyph .text-block-copy-btn:hover { background:#3a2a08; color:#ecc94b; }
+.issue-panel.missing  .text-block-copy-btn { border-color:#742a2a; color:#a05050; background:transparent; }
+.issue-panel.missing  .text-block-copy-btn:hover { background:#2d1515; color:#fc8181; }
+.text-block-content { font-family:system-ui,sans-serif; color:#cbd5e0; word-break:break-all; padding:8px 10px; border-radius:6px; line-height:2; }
+.issue-panel.no-glyph .text-block-content { background:#1c1606; }
+.issue-panel.missing  .text-block-content { background:#180d0d; }
+
+.issue-divider { height:1px; }
+.issue-panel.no-glyph .issue-divider { background:#3a2a08; }
+.issue-panel.missing  .issue-divider  { background:#3a1515; }
+
+/* ====== 汇总导出按钮 ====== */
+.issue-section-header {
+  display:flex; align-items:center; gap:10px; margin-top:20px; margin-bottom:10px;
+}
+.issue-section-title { font-size:.82rem; font-weight:700; color:#94a3b8; white-space:nowrap; }
+.issue-section-line  { flex:1; height:1px; background:#2d3748; }
+.export-all-btn {
+  display:inline-flex; align-items:center; gap:6px;
+  font-size:.8rem; font-weight:600; padding:6px 14px;
+  border-radius:7px; cursor:pointer; transition:all .18s;
+  border:1px solid #4a5568; color:#cbd5e0; background:#1e2330;
+  white-space:nowrap;
+}
+.export-all-btn:hover { border-color:#a78bfa; color:#a78bfa; background:#1e1a2e; }
+
+/* ====== CSV 弹窗 ====== */
+.csv-modal-bg {
+  position:fixed; inset:0; background:rgba(0,0,0,.7);
+  display:flex; align-items:center; justify-content:center;
+  z-index:10000; padding:20px;
+  animation:fadeIn .15s ease;
+}
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+.csv-modal {
+  background:#1a1f2e; border:1px solid #4a5568; border-radius:16px;
+  width:100%; max-width:720px; max-height:88vh;
+  display:flex; flex-direction:column;
+  box-shadow:0 25px 60px rgba(0,0,0,.6);
+  animation:slideUp .18s ease;
+}
+@keyframes slideUp { from{transform:translateY(16px);opacity:0} to{transform:translateY(0);opacity:1} }
+.csv-modal-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:16px 20px; border-bottom:1px solid #2d3748;
+}
+.csv-modal-title { font-size:1rem; font-weight:700; color:#e2e8f0; display:flex; align-items:center; gap:8px; }
+.csv-modal-subtitle { font-size:.78rem; color:#718096; margin-top:2px; }
+.csv-modal-close { width:30px; height:30px; border-radius:8px; border:1px solid #4a5568; background:#2d3748; color:#94a3b8; cursor:pointer; font-size:1rem; display:flex; align-items:center; justify-content:center; transition:all .15s; }
+.csv-modal-close:hover { border-color:#fc8181; color:#fc8181; }
+.csv-modal-body { flex:1; overflow-y:auto; padding:16px 20px; }
+.csv-modal-footer { padding:14px 20px; border-top:1px solid #2d3748; display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+.csv-textarea {
+  width:100%; min-height:320px; background:#0f1117; border:1px solid #2d3748;
+  border-radius:10px; padding:14px; color:#e2e8f0; font-family:monospace;
+  font-size:.85rem; line-height:1.8; outline:none; resize:vertical;
+}
+.csv-textarea:focus { border-color:#667eea; }
+.csv-hint { font-size:.78rem; color:#718096; margin-bottom:10px; line-height:1.6; }
+.csv-stat-row { display:flex; gap:12px; margin-bottom:12px; flex-wrap:wrap; }
+.csv-stat { font-size:.78rem; padding:3px 10px; border-radius:5px; font-weight:600; }
+.csv-stat.ng  { background:#2a2006; color:#ecc94b; border:1px solid #744210; }
+.csv-stat.bad { background:#2a1010; color:#fc8181; border:1px solid #742a2a; }
+.csv-stat.all { background:#1a2035; color:#a78bfa; border:1px solid #553c9a; }
+.modal-btn { padding:8px 18px; border-radius:8px; font-size:.85rem; font-weight:600; cursor:pointer; transition:all .15s; border:1px solid; }
+.modal-btn.copy  { background:#667eea; border-color:#667eea; color:#fff; }
+.modal-btn.copy:hover  { opacity:.85; }
+.modal-btn.dl    { background:#2d3748; border-color:#4a5568; color:#cbd5e0; }
+.modal-btn.dl:hover    { border-color:#667eea; color:#667eea; }
+.modal-btn.close { background:transparent; border-color:#4a5568; color:#94a3b8; margin-left:auto; }
+.modal-btn.close:hover { border-color:#fc8181; color:#fc8181; }
+.copy-ok { color:#48bb78 !important; }
+
+#app { display:none; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-icon">🔤</div>
+  <div>
+    <h1>字体字符集分析器</h1>
+    <p>解析字体 cmap + loca/glyf 表 · 字符集可视化 · 缺字上下文定位 · CSV 导出</p>
+  </div>
+</div>
+
+<div id="initial">
+  <div class="upload-area" id="uploadArea">
+    <div class="upload-icon">📂</div>
+    <h2>拖拽字体文件到此处</h2>
+    <p>支持 .ttf / .otf 格式</p>
+    <label class="btn-upload">选择字体文件<input type="file" id="fileInput" accept=".ttf,.otf,.woff,.woff2"></label>
+  </div>
+</div>
+
+<div id="loadingArea" style="display:none;">
+  <div class="loading"><div class="spinner"></div><p style="color:#94a3b8">正在解析字体数据（cmap + loca + glyf）…</p></div>
+</div>
+
+<div id="app">
+  <div class="stats-grid" id="statsGrid"></div>
+  <div class="tabs" id="tabBar"></div>
+  <div class="content-area" id="contentArea"></div>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+// ===================== TTF Parser =====================
+class TTFParser {
+  constructor(buf) { this.dv = new DataView(buf); }
+  u8(o)  { return this.dv.getUint8(o); }
+  u16(o) { return this.dv.getUint16(o,false); }
+  u32(o) { return this.dv.getUint32(o,false); }
+  i16(o) { return this.dv.getInt16(o,false); }
+  str(o,l)   { let s=''; for(let i=0;i<l;i++) s+=String.fromCharCode(this.u8(o+i)); return s; }
+  utf16(o,l) { let s=''; for(let i=0;i<l;i+=2) s+=String.fromCharCode(this.u16(o+i)); return s; }
+  tables() {
+    const n=this.u16(4),t={};
+    for(let i=0;i<n;i++){const o=12+i*16;t[this.str(o,4)]={offset:this.u32(o+8),length:this.u32(o+12)};}
+    return t;
+  }
+  parseCmap(tables) {
+    if(!tables['cmap']) return new Map();
+    const base=tables['cmap'].offset,n=this.u16(base+2);
+    let best=null,bestP=-1;
+    for(let i=0;i<n;i++){
+      const r=base+4+i*8,pid=this.u16(r),eid=this.u16(r+2);
+      const off=base+this.u32(r+4),fmt=this.u16(off);
+      let p=-1;
+      if(pid===3&&eid===10&&fmt===12)p=10;else if(pid===0&&eid===4&&fmt===12)p=9;
+      else if(pid===3&&eid===1&&fmt===4)p=8;else if(pid===0&&eid===3&&fmt===4)p=7;
+      else if(fmt===12)p=6;else if(fmt===4)p=5;
+      if(p>bestP){bestP=p;best={offset:off,format:fmt};}
+    }
+    if(!best) return new Map();
+    const map=new Map();
+    if(best.format===4){
+      const seg=this.u16(best.offset+6)/2;
+      const ecB=best.offset+14,scB=ecB+2+seg*2,dB=scB+seg*2,roB=dB+seg*2;
+      for(let s=0;s<seg;s++){
+        const ec=this.u16(ecB+s*2),sc=this.u16(scB+s*2);
+        if(sc===0xFFFF) continue;
+        const delta=this.i16(dB+s*2),ro=this.u16(roB+s*2);
+        for(let c=sc;c<=ec;c++){
+          let gid=0;
+          if(ro===0){gid=(c+delta)&0xFFFF;}
+          else{const g=roB+s*2+ro+(c-sc)*2;if(g+1<this.dv.byteLength){const raw=this.u16(g);if(raw)gid=(raw+delta)&0xFFFF;}}
+          if(gid) map.set(c,gid);
+        }
+      }
+    } else if(best.format===12){
+      const ng=this.u32(best.offset+12);
+      for(let g=0;g<ng;g++){
+        const gr=best.offset+16+g*12,sc=this.u32(gr),ec=this.u32(gr+4),sg=this.u32(gr+8);
+        for(let c=sc;c<=ec;c++){const gid=sg+(c-sc);if(gid)map.set(c,gid);}
+      }
+    }
+    return map;
+  }
+  parseLoca(tables,numGlyphs,fmt){
+    if(!tables['loca']||numGlyphs==null) return null;
+    const o=tables['loca'].offset,arr=[];
+    if(fmt===0){for(let i=0;i<=numGlyphs;i++)arr.push(this.u16(o+i*2)*2);}
+    else{for(let i=0;i<=numGlyphs;i++)arr.push(this.u32(o+i*4));}
+    return arr;
+  }
+  parseName(tables){
+    if(!tables['name']) return {};
+    const o=tables['name'].offset,count=this.u16(o+2),strOff=this.u16(o+4);
+    const labels={0:'版权',1:'字体家族',2:'子家族',4:'全名',5:'版本',6:'PostScript名'};
+    const names={};
+    for(let i=0;i<count;i++){
+      const r=o+6+i*12,pid=this.u16(r),nid=this.u16(r+6);
+      const len=this.u16(r+8),soff=this.u16(r+10);
+      if(labels[nid]!==undefined&&!names[nid]){
+        const abs=o+strOff+soff;
+        const val=(pid===3||pid===0?this.utf16(abs,len):this.str(abs,len)).trim();
+        if(val)names[nid]={label:labels[nid],value:val};
+      }
+    }
+    return names;
+  }
+  parseFontInfo(tables){
+    const info={};
+    if(tables['head']){const o=tables['head'].offset;info.unitsPerEm=this.u16(o+18);info.indexToLocFormat=this.i16(o+50);}
+    if(tables['maxp']){const o=tables['maxp'].offset;info.numGlyphs=this.u16(o+4);}
+    return info;
+  }
+  parse(){
+    const tables=this.tables();
+    const fontInfo=this.parseFontInfo(tables);
+    const charToGlyph=this.parseCmap(tables);
+    const locaOffsets=this.parseLoca(tables,fontInfo.numGlyphs,fontInfo.indexToLocFormat);
+    const glyphsWithData=new Set();
+    if(locaOffsets){for(let i=0;i<locaOffsets.length-1;i++)if(locaOffsets[i+1]>locaOffsets[i])glyphsWithData.add(i);}
+    return{charToGlyph,glyphsWithData,names:this.parseName(tables),fontInfo};
+  }
+}
+
+// ===================== Unicode Blocks =====================
+const BLOCKS=[
+  {name:'Basic Latin (ASCII)',start:0x0000,end:0x007F,emoji:'🔤'},
+  {name:'Latin-1 Supplement',start:0x0080,end:0x00FF,emoji:'🌐'},
+  {name:'Latin Extended-A',start:0x0100,end:0x017F,emoji:'🔠'},
+  {name:'Latin Extended-B',start:0x0180,end:0x024F,emoji:'🔡'},
+  {name:'IPA Extensions',start:0x0250,end:0x02AF,emoji:'📢'},
+  {name:'Spacing Modifier Letters',start:0x02B0,end:0x02FF,emoji:'✏️'},
+  {name:'Combining Diacritical Marks',start:0x0300,end:0x036F,emoji:'🔀'},
+  {name:'Greek and Coptic',start:0x0370,end:0x03FF,emoji:'Ω'},
+  {name:'Cyrillic',start:0x0400,end:0x04FF,emoji:'Я'},
+  {name:'Latin Extended Additional',start:0x1E00,end:0x1EFF,emoji:'🇻🇳'},
+  {name:'General Punctuation',start:0x2000,end:0x206F,emoji:'…'},
+  {name:'Currency Symbols',start:0x20A0,end:0x20CF,emoji:'💱'},
+  {name:'Mathematical Operators',start:0x2200,end:0x22FF,emoji:'∑'},
+  {name:'Geometric Shapes',start:0x25A0,end:0x25FF,emoji:'◆'},
+  {name:'Miscellaneous Symbols',start:0x2600,end:0x26FF,emoji:'☀'},
+  {name:'CJK Unified Ideographs',start:0x4E00,end:0x9FFF,emoji:'汉'},
+  {name:'Hangul Syllables',start:0xAC00,end:0xD7AF,emoji:'한'},
+  {name:'Private Use Area',start:0xE000,end:0xF8FF,emoji:'🔒'},
+  {name:'Alphabetic Presentation Forms',start:0xFB00,end:0xFB4F,emoji:'ﬁ'},
+];
+function classifyChars(cps){
+  const out={};
+  for(const b of BLOCKS){const inB=cps.filter(c=>c>=b.start&&c<=b.end);if(inB.length)out[b.name]={...b,chars:inB.sort((a,b)=>a-b)};}
+  const covered=new Set(Object.values(out).flatMap(b=>b.chars));
+  const rest=cps.filter(c=>!covered.has(c));
+  if(rest.length)out['Other / Unclassified']={name:'Other / Unclassified',emoji:'❓',chars:rest.sort((a,b)=>a-b)};
+  return out;
+}
+
+// ===================== App State =====================
+let fontName='Font', allChars=[], classified={};
+let charToGlyph=new Map(), glyphsWithData=new Set();
+let currentTab='all', currentPage=0;
+const PAGE_SIZE=300;
+let textViewMode='cells';
+let lastAnalyzedText='';
+let lastNoGlyphMap=new Map(), lastMissingMap=new Map();
+
+const SPACES=new Set([9,10,13,32,0xA0,0x3000,0x2003,0x2002]);
+function isSpace(cp){return SPACES.has(cp);}
+function getCharState(cp){
+  const gid=charToGlyph.get(cp);
+  if(gid===undefined) return 'missing';
+  if(!glyphsWithData.has(gid)) return 'no-glyph';
+  return 'supported';
+}
+
+// ===================== Context Extraction =====================
+function extractContexts(text, cp, maxSnippets=5){
+  const targetChar=String.fromCodePoint(cp), CTX=10;
+  const lines=text.split('\n'), snippets=[];
+  for(const line of lines){
+    if(!line.includes(targetChar)) continue;
+    const chars=[...line];
+    for(let i=0;i<chars.length;i++){
+      if(chars[i].codePointAt(0)!==cp) continue;
+      snippets.push({
+        before:chars.slice(Math.max(0,i-CTX),i).join(''),
+        after:chars.slice(i+1,Math.min(chars.length,i+CTX+1)).join('')
+      });
+      if(snippets.length>=maxSnippets) return snippets;
+    }
+  }
+  return snippets;
+}
+
+// ===================== CSV Generation =====================
+// 生成单个面板的 CSV 文本
+function generateCSVRows(charMap, originalText, maxCtx=5){
+  const rows=[];
+  const sorted=[...charMap.entries()].sort((a,b)=>b[1]-a[1]);
+  for(const [cp,cnt] of sorted){
+    const char=String.fromCodePoint(cp);
+    const snippets=extractContexts(originalText,cp,maxCtx);
+    if(snippets.length){
+      // 每条上下文单独一行：字符, 上下文全文
+      for(const s of snippets){
+        rows.push(`${char},${s.before}${char}${s.after}`);
+      }
+    } else {
+      rows.push(`${char},（无上下文）`);
+    }
+  }
+  return rows;
+}
+
+// 显示 CSV 弹窗
+function showCSVModal(title, subtitle, csvText, stats){
+  const existing=document.getElementById('csvModalBg');
+  if(existing) existing.remove();
+
+  const bg=document.createElement('div');
+  bg.id='csvModalBg';
+  bg.className='csv-modal-bg';
+  bg.innerHTML=`
+    <div class="csv-modal" id="csvModalBox">
+      <div class="csv-modal-header">
+        <div>
+          <div class="csv-modal-title">📋 ${title}</div>
+          <div class="csv-modal-subtitle">${subtitle}</div>
+        </div>
+        <button class="csv-modal-close" onclick="closeCSVModal()">✕</button>
+      </div>
+      <div class="csv-modal-body">
+        <div class="csv-stat-row">${stats}</div>
+        <div class="csv-hint">
+          格式：<code style="background:#2d3748;padding:2px 6px;border-radius:4px;font-size:.8rem">字符,上下文</code>
+          &nbsp;·&nbsp; 每行一个缺失字符，上下文取自输入文本（同行前后各 7 字）
+        </div>
+        <textarea class="csv-textarea" id="csvTextarea" readonly>${csvText}</textarea>
+      </div>
+      <div class="csv-modal-footer">
+        <button class="modal-btn copy" id="csvCopyBtn" onclick="copyCSV()">📋 复制全部</button>
+        <button class="modal-btn dl" onclick="downloadCSV('${title.replace(/\s+/g,'_')}')">⬇ 下载 .txt</button>
+        <button class="modal-btn close" onclick="closeCSVModal()">关闭</button>
+        <span style="font-size:.75rem;color:#4a5568;margin-left:4px">${csvText.split('\n').length} 行</span>
+      </div>
+    </div>`;
+
+  // 点击背景关闭
+  bg.addEventListener('click', e=>{if(e.target===bg) closeCSVModal();});
+  document.body.appendChild(bg);
+  document.getElementById('csvTextarea').select();
+}
+
+function closeCSVModal(){
+  const el=document.getElementById('csvModalBg');
+  if(el) el.remove();
+}
+
+function copyCSV(){
+  const ta=document.getElementById('csvTextarea');
+  if(!ta) return;
+  navigator.clipboard.writeText(ta.value).then(()=>{
+    const btn=document.getElementById('csvCopyBtn');
+    if(btn){btn.textContent='✓ 已复制';btn.classList.add('copy-ok');setTimeout(()=>{btn.textContent='📋 复制全部';btn.classList.remove('copy-ok');},1800);}
+  }).catch(()=>{ta.select();document.execCommand('copy');});
+}
+
+function downloadCSV(name){
+  const ta=document.getElementById('csvTextarea');
+  if(!ta) return;
+  const blob=new Blob([ta.value],{type:'text/plain;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`${name}_${Date.now()}.csv`;
+  a.click();
+}
+
+// 各面板导出按钮
+function exportNoGlyphCSV(){
+  if(!lastNoGlyphMap.size){alert('没有"映射但无字形"的字符');return;}
+  const rows=generateCSVRows(lastNoGlyphMap,lastAnalyzedText);
+  showCSVModal(
+    '映射但无字形数据',
+    `共 ${lastNoGlyphMap.size} 个字符`,
+    rows.join('\n'),
+    `<span class="csv-stat ng">⚠ 无字形 ${lastNoGlyphMap.size} 种</span>`
+  );
+}
+function exportMissingCSV(){
+  if(!lastMissingMap.size){alert('没有"完全缺失"的字符');return;}
+  const rows=generateCSVRows(lastMissingMap,lastAnalyzedText);
+  showCSVModal(
+    '完全缺失未映射',
+    `共 ${lastMissingMap.size} 个字符`,
+    rows.join('\n'),
+    `<span class="csv-stat bad">✗ 缺失 ${lastMissingMap.size} 种</span>`
+  );
+}
+
+// 汇总导出按钮
+function exportAllCSV(){
+  const ngRows=lastNoGlyphMap.size ? generateCSVRows(lastNoGlyphMap,lastAnalyzedText) : [];
+  const badRows=lastMissingMap.size ? generateCSVRows(lastMissingMap,lastAnalyzedText) : [];
+  if(!ngRows.length&&!badRows.length){alert('暂无问题字符');return;}
+
+  const parts=[];
+  if(ngRows.length){parts.push('# 映射但无字形数据');parts.push(...ngRows);}
+  if(ngRows.length&&badRows.length) parts.push('');
+  if(badRows.length){parts.push('# 完全缺失未映射');parts.push(...badRows);}
+
+  showCSVModal(
+    '全部问题字符汇总',
+    `共 ${lastNoGlyphMap.size+lastMissingMap.size} 个字符`,
+    parts.join('\n'),
+    `<span class="csv-stat ng">⚠ 无字形 ${lastNoGlyphMap.size} 种</span>
+     <span class="csv-stat bad">✗ 缺失 ${lastMissingMap.size} 种</span>
+     <span class="csv-stat all">∑ 合计 ${lastNoGlyphMap.size+lastMissingMap.size} 种</span>`
+  );
+}
+
+// ===================== Render Helpers =====================
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function renderCharCell(cp){
+  const state=getCharState(cp),char=String.fromCodePoint(cp),hex=cp.toString(16).toUpperCase().padStart(4,'0');
+  const icons={'no-glyph':'⚠','missing':'✗'};
+  return`<div class="char-cell state-${state}" onmouseenter="showTip(event,${cp})" onmouseleave="hideTip()">
+    ${icons[state]?`<span class="cell-state-icon ${state}">${icons[state]}</span>`:''}
+    <span class="char-glyph" style="${state!=='missing'?`font-family:'${fontName}',sans-serif;`:''}">${escHtml(char)}</span>
+    <span class="char-code">U+${hex}</span>
+  </div>`;
+}
+function renderCharGrid(cps){return`<div class="char-grid">${cps.map(renderCharCell).join('')}</div>`;}
+function renderPagination(page,total){
+  if(total<=1)return'';
+  let pages='';
+  for(let i=0;i<total;i++){
+    if(i===0||i===total-1||Math.abs(i-page)<=2)pages+=`<button class="page-btn ${i===page?'active':''}" onclick="goPage(${i})">${i+1}</button>`;
+    else if(Math.abs(i-page)===3)pages+=`<span style="color:#4a5568">…</span>`;
+  }
+  return`<div class="page-controls">
+    <button class="page-btn" onclick="goPage(${Math.max(0,page-1)})">‹ 上一页</button>${pages}
+    <button class="page-btn" onclick="goPage(${Math.min(total-1,page+1)})">下一页 ›</button>
+    <span class="page-info">第 ${page+1}/${total} 页，每页 ${PAGE_SIZE} 个</span>
+  </div>`;
+}
+
+// ===================== Issue Panel =====================
+function renderIssuePanel(type, charMap, originalText){
+  if(!charMap.size) return '';
+  const cls=type==='no-glyph'?'no-glyph':'missing';
+  const icon=type==='no-glyph'?'⚠':'✗';
+  const title=type==='no-glyph'?'映射但无字形数据':'完全缺失未映射';
+  const tgtClass=type==='no-glyph'?'ctx-target-ng':'ctx-target-bad';
+  const exportFn=type==='no-glyph'?'exportNoGlyphCSV()':'exportMissingCSV()';
+  const totalCnt=[...charMap.values()].reduce((a,b)=>a+b,0);
+  const allUniqueChars=[...charMap.keys()].map(cp=>String.fromCodePoint(cp)).join('');
+  const sorted=[...charMap.entries()].sort((a,b)=>b[1]-a[1]);
+  const panelId='issueText_'+cls+'_'+Date.now();
+
+  const rows=sorted.map(([cp,cnt])=>{
+    const char=String.fromCodePoint(cp),hex=cp.toString(16).toUpperCase().padStart(4,'0');
+    const snippets=extractContexts(originalText,cp);
+    const snippetHtml=snippets.length
+      ? snippets.map(s=>`<div class="ctx-line"><span class="ctx-before">${escHtml(s.before)}</span><span class="${tgtClass}">${escHtml(char)}</span><span class="ctx-after">${escHtml(s.after)}</span></div>`).join('')
+      : `<div class="ctx-more">（未找到上下文）</div>`;
+    const moreHint=cnt>snippets.length?`<div class="ctx-more">…共出现 ${cnt} 次</div>`:'';
+    return`<div class="issue-text-row">
+      <div class="issue-char-tag">
+        <span class="char-tag-glyph" style="font-family:'${fontName}',sans-serif">${escHtml(char)}</span>
+        <span class="char-tag-code">U+${hex}</span>
+        ${cnt>1?`<span class="char-tag-cnt">×${cnt}</span>`:''}
+      </div>
+      <div class="ctx-snippets">${snippetHtml}${moreHint}</div>
+    </div>`;
+  }).join('<div class="issue-divider"></div>');
+
+  return`<div class="issue-panel ${cls}">
+    <div class="issue-panel-head">
+      <span>${icon} ${title}</span>
+      <span style="font-weight:400;font-size:.78rem;opacity:.8">${charMap.size} 种 · ${totalCnt} 次</span>
+      <button class="panel-export-btn" onclick="${exportFn}">📋 导出 CSV</button>
+    </div>
+    ${rows}
+    <div class="issue-divider"></div>
+    <div class="issue-text-block">
+      <div class="text-block-label">
+        📋 缺字文本（${charMap.size} 个唯一字符）
+        <button class="text-block-copy-btn" onclick="copyText('${panelId}')">复制</button>
+      </div>
+      <div class="text-block-content" id="${panelId}">${escHtml(allUniqueChars)}</div>
+    </div>
+  </div>`;
+}
+
+function copyText(id){
+  const el=document.getElementById(id);if(!el)return;
+  navigator.clipboard.writeText(el.textContent).then(()=>{
+    const btn=el.previousElementSibling?.querySelector('.text-block-copy-btn');
+    if(btn){const o=btn.textContent;btn.textContent='✓ 已复制';setTimeout(()=>btn.textContent=o,1500);}
+  }).catch(()=>{});
+}
+
+// ===================== Stats =====================
+function renderStats(names,fontInfo,filename){
+  const nameInfo=Object.values(names).find(n=>n.label==='字体家族');
+  const fullName=Object.values(names).find(n=>n.label==='全名');
+  const total=allChars.length;
+  const supported=allChars.filter(c=>getCharState(c)==='supported').length;
+  const noGlyph=allChars.filter(c=>getCharState(c)==='no-glyph').length;
+  document.getElementById('statsGrid').innerHTML=`
+    <div class="stat-card" style="grid-column:1/-1;text-align:left;padding:16px 20px;">
+      <div style="font-size:.75rem;color:#718096;margin-bottom:4px;">📄 文件</div>
+      <div style="font-size:1rem;font-weight:700;color:#e2e8f0;">${escHtml(filename)}</div>
+      ${nameInfo?`<div style="font-size:.85rem;color:#94a3b8;margin-top:4px;">字体家族: <span style="color:#667eea">${escHtml(nameInfo.value)}</span></div>`:''}
+      ${fullName?`<div style="font-size:.85rem;color:#94a3b8;">全名: <span style="color:#a78bfa">${escHtml(fullName.value)}</span></div>`:''}
+    </div>
+    <div class="stat-card"><div class="stat-value stat-blue">${total.toLocaleString()}</div><div class="stat-label">cmap 映射总数</div></div>
+    <div class="stat-card"><div class="stat-value stat-green">${supported.toLocaleString()}</div><div class="stat-label">有字形数据 ✓</div></div>
+    <div class="stat-card"><div class="stat-value stat-orange">${noGlyph.toLocaleString()}</div><div class="stat-label">映射无字形 ⚠</div></div>
+    <div class="stat-card"><div class="stat-value stat-gray">${fontInfo.numGlyphs||'-'}</div><div class="stat-label">Glyph 总数</div></div>
+    <div class="stat-card"><div class="stat-value stat-blue">${fontInfo.unitsPerEm||'-'}</div><div class="stat-label">Units Per EM</div></div>
+    <div class="stat-card"><div class="stat-value stat-blue">${Object.keys(classified).length}</div><div class="stat-label">Unicode 块</div></div>
+  `;
+}
+
+// ===================== Tabs =====================
+function renderTabs(){
+  document.getElementById('tabBar').innerHTML=[
+    {id:'all',label:'全部字符',count:allChars.length},
+    {id:'blocks',label:'Unicode 块',count:Object.keys(classified).length},
+    {id:'text',label:'📝 文本分析',count:''},
+    {id:'preview',label:'字体预览',count:''},
+    {id:'info',label:'详细信息',count:''},
+  ].map(t=>`<div class="tab ${currentTab===t.id?'active':''}" onclick="switchTab('${t.id}')">
+    ${t.label}${t.count!==''?`<span class="badge">${t.count}</span>`:''}
+  </div>`).join('');
+}
+
+// ===================== Content =====================
+function renderContent(){
+  const area=document.getElementById('contentArea');
+  if(currentTab==='all'){
+    const start=currentPage*PAGE_SIZE,pageChars=allChars.slice(start,start+PAGE_SIZE),total=Math.ceil(allChars.length/PAGE_SIZE);
+    const sup=allChars.filter(c=>getCharState(c)==='supported').length;
+    const ng=allChars.filter(c=>getCharState(c)==='no-glyph').length;
+    area.innerHTML=`
+      <div class="filter-bar">
+        <input class="search-input" placeholder="搜索字符… (输入字符或 U+ 码点)" oninput="filterChars(this.value)">
+        <div style="display:flex;gap:12px;font-size:.8rem;align-items:center;flex-wrap:wrap;">
+          <span><span style="color:#48bb78">■</span> 有字形 ${sup}</span>
+          <span><span style="color:#ecc94b">■</span> 无字形 ${ng}</span>
+          <span><span style="color:#718096">■</span> 共 ${allChars.length}</span>
+        </div>
+      </div>
+      <div id="charGridContainer">${renderCharGrid(pageChars)}</div>
+      ${renderPagination(currentPage,total)}`;
+  } else if(currentTab==='blocks'){
+    area.innerHTML=Object.entries(classified).map(([name,block])=>{
+      const bid='blk_'+name.replace(/\W+/g,'_');
+      const sup=block.chars.filter(c=>getCharState(c)==='supported').length;
+      const ng=block.chars.filter(c=>getCharState(c)==='no-glyph').length;
+      return`<div class="unicode-block">
+        <div class="block-header" onclick="toggleBlock('${bid}')">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <span>${block.emoji||'📦'}</span>
+            <span style="font-weight:600;color:#cbd5e0">${name}</span>
+            ${block.start!=null?`<span style="color:#718096;font-size:.75rem;font-family:monospace">U+${block.start.toString(16).toUpperCase().padStart(4,'0')}–U+${block.end.toString(16).toUpperCase().padStart(4,'0')}</span>`:''}
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;flex-shrink:0;">
+            <span style="color:#48bb78;font-size:.8rem">✓${sup}</span>
+            ${ng?`<span style="color:#ecc94b;font-size:.8rem">⚠${ng}</span>`:''}
+            <span style="color:#667eea;font-size:.85rem;font-weight:700">${block.chars.length} ▼</span>
+          </div>
+        </div>
+        <div class="block-chars char-grid" id="${bid}">${block.chars.map(renderCharCell).join('')}</div>
+      </div>`;
+    }).join('');
+  } else if(currentTab==='text'){
+    area.innerHTML=`
+      <div class="text-panel">
+        <div class="text-drop-zone" id="textDropZone">
+          <div class="text-drop-overlay"><div class="drop-overlay-icon">📋</div><div class="drop-overlay-text">松开以分析文本</div></div>
+          <textarea class="text-input-area" id="textInput"
+            placeholder="✦ 输入或粘贴文本，或从页面任意位置拖拽文本到此处&#10;✦ Ctrl+Enter 快速分析&#10;&#10;示例：Tiếng Việt xin chào thế giới"></textarea>
+          <div class="text-toolbar">
+            <div class="toolbar-left">
+              <button class="toolbar-btn primary" onclick="analyzeText()">🔍 分析字符</button>
+              <button class="toolbar-btn" onclick="loadSample('viet')">🇻🇳 越南语</button>
+              <button class="toolbar-btn" onclick="loadSample('mixed')">🌐 多语言</button>
+              <button class="toolbar-btn danger" onclick="clearText()">✕ 清空</button>
+            </div>
+            <div class="toolbar-right">
+              <label class="dedup-wrap">
+                <input type="checkbox" id="dedupToggle" checked>
+                <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                <span class="dedup-label">去重</span>
+              </label>
+              <span class="char-counter" id="charCounter">0 个字符</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="analysisResult"></div>`;
+    const zone=document.getElementById('textDropZone'),inp=document.getElementById('textInput');
+    inp.addEventListener('input',()=>{document.getElementById('charCounter').textContent=`${[...inp.value].length} 个字符`;});
+    inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.ctrlKey)analyzeText();});
+    zone.addEventListener('dragover',e=>{e.preventDefault();if(e.dataTransfer.types.includes('text/plain'))zone.classList.add('drag-over');});
+    zone.addEventListener('dragleave',e=>{if(!zone.contains(e.relatedTarget))zone.classList.remove('drag-over');});
+    zone.addEventListener('drop',e=>{
+      e.preventDefault();zone.classList.remove('drag-over');
+      const text=e.dataTransfer.getData('text/plain');
+      if(text){inp.value=(inp.value?inp.value+'\n':'')+text;document.getElementById('charCounter').textContent=`${[...inp.value].length} 个字符`;analyzeText();}
+    });
+  } else if(currentTab==='preview'){
+    const previews=[
+      {label:'数字与符号',text:'0123456789 !@#$%^&*()+-=[]{}|;:,.<>?'},
+      {label:'基础拉丁字母',text:'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'},
+      {label:'简体中文',text:'永和九年岁在癸丑暮春之初会于会稽山阴之兰亭修禊事也'},
+      {label:'繁體中文',text:'永和九年歲在癸丑暮春之初會於會稽山陰之蘭亭修禊事也'},
+      {label:'한국어 (韩文)',text:'대한민국 서울 안녕하세요 가나다라마바사아자차카타파하'},
+      {label:'日本語 (日文)',text:'吾輩は猫である名前はまだ無いどこで生れたか頓と見当がつかぬ'},
+      {label:'越南语 (Tiếng Việt)',text:'Tiếng Việt xin chào thế giới!'},
+      {label:'声调字符集',text:'à á â ã ā ă è é ê ë ě ì í î ï ò ó ô ũ ụ ứ ừ ự'},
+      {label:'Latin Extended Additional',text:'Ắ Ặ Ầ Ậ Ẩ Ẫ Ắ Ẳ Ẵ ắ ặ ầ ậ ẩ ẫ Ẹ ẹ Ị ị'},
+    ];
+    area.innerHTML=`<div class="font-preview-section">
+      <div style="margin-bottom:16px;color:#94a3b8;font-size:.875rem;">使用 <strong style="color:#667eea">${escHtml(fontName)}</strong> 字体渲染</div>
+      ${previews.map(p=>`<div style="margin-bottom:18px;"><div class="preview-label">${p.label}</div><div class="preview-text" style="font-family:'${fontName}',sans-serif;">${escHtml(p.text)}</div></div>`).join('')}
+      <div style="margin-top:18px;"><div class="preview-label">✏️ 自定义预览</div>
+        <input class="search-input" placeholder="输入文字…" oninput="document.getElementById('cPrev').innerText=this.value||''" style="margin-bottom:8px;width:100%;">
+        <div class="preview-text" style="font-family:'${fontName}',sans-serif;" id="cPrev">在此输入文字进行预览…</div>
+      </div>
+    </div>`;
+  } else if(currentTab==='info'){
+    area.innerHTML=`<div style="background:#1a1f2e;border:1px solid #2d3748;border-radius:12px;overflow:hidden;">
+      <table style="width:100%;border-collapse:collapse;">
+        <thead><tr style="background:#2d3748;">
+          <th style="padding:12px;text-align:left;color:#94a3b8;font-size:.85rem;">Unicode 块</th>
+          <th style="padding:12px;text-align:left;color:#94a3b8;font-size:.85rem;">有字形</th>
+          <th style="padding:12px;text-align:left;color:#94a3b8;font-size:.85rem;">无字形</th>
+          <th style="padding:12px;text-align:left;color:#94a3b8;font-size:.85rem;">范围</th>
+        </tr></thead>
+        <tbody>${Object.entries(classified).map(([name,b])=>{
+          const sup=b.chars.filter(c=>getCharState(c)==='supported').length;
+          const ng=b.chars.filter(c=>getCharState(c)==='no-glyph').length;
+          return`<tr style="border-top:1px solid #2d3748;">
+            <td style="padding:8px 12px;">${b.emoji||''} ${name}</td>
+            <td style="padding:8px 12px;color:#48bb78;font-weight:700;">${sup}</td>
+            <td style="padding:8px 12px;color:${ng>0?'#ecc94b':'#4a5568'};font-weight:700;">${ng||'—'}</td>
+            <td style="padding:8px 12px;color:#718096;font-family:monospace;font-size:.8rem;">
+              ${b.start!=null?`U+${b.start.toString(16).toUpperCase().padStart(4,'0')}–U+${b.end.toString(16).toUpperCase().padStart(4,'0')}`:'—'}
+            </td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>
+    </div>`;
+  }
+}
+
+// ===================== Text Analyze =====================
+function analyzeText(){
+  const inp=document.getElementById('textInput');
+  if(!inp||!inp.value.trim()){document.getElementById('analysisResult').innerHTML=`<div style="color:#718096;text-align:center;padding:24px;">请先输入文本</div>`;return;}
+  lastAnalyzedText=inp.value;
+  let text=lastAnalyzedText;
+  const dedupEnabled=document.getElementById('dedupToggle')?.checked;
+  let dedupCount=0;
+  if(dedupEnabled){const seen=new Set();let d='';for(const ch of text){if(!seen.has(ch)){seen.add(ch);d+=ch;}else dedupCount++;}text=d;}
+
+  const codepoints=[...text].map(c=>c.codePointAt(0));
+  let supported=0,noGlyph=0,missing=0,spaces=0;
+  lastNoGlyphMap=new Map(); lastMissingMap=new Map();
+  codepoints.forEach(cp=>{
+    if(isSpace(cp)){spaces++;return;}
+    const st=getCharState(cp);
+    if(st==='supported')supported++;
+    else if(st==='no-glyph'){noGlyph++;lastNoGlyphMap.set(cp,(lastNoGlyphMap.get(cp)||0)+1);}
+    else{missing++;lastMissingMap.set(cp,(lastMissingMap.get(cp)||0)+1);}
+  });
+
+  const nonSpace=codepoints.length-spaces;
+  const pct=nonSpace>0?Math.round(supported/nonSpace*100):0;
+  const pctNg=nonSpace>0?Math.round(noGlyph/nonSpace*100):0;
+  const pctBad=nonSpace>0?Math.round(missing/nonSpace*100):0;
+  const hasIssue=lastNoGlyphMap.size||lastMissingMap.size;
+
+  document.getElementById('analysisResult').innerHTML=`
+    <div class="analysis-result">
+      ${dedupCount>0?`<div class="dedup-info">⚡ 去重已开启：移除 <strong>${dedupCount}</strong> 个重复字符，分析 <strong>${[...text].length}</strong> 个唯一字符</div>`:''}
+      <div class="result-summary">
+        <div class="result-badge"><div class="badge-dot dot-supported"></div><span class="badge-num">${supported}</span><span class="badge-label">有字形 ✓</span></div>
+        <div class="result-badge"><div class="badge-dot dot-no-glyph"></div><span class="badge-num">${noGlyph}</span><span class="badge-label">映射无字形 ⚠</span></div>
+        <div class="result-badge"><div class="badge-dot dot-missing"></div><span class="badge-num">${missing}</span><span class="badge-label">完全缺失 ✗</span></div>
+        <div class="result-badge"><div class="badge-dot dot-space"></div><span class="badge-num">${spaces}</span><span class="badge-label">空白符</span></div>
+        <div class="result-badge" style="border-color:#2f855a;background:#1a2e22;">
+          <span style="font-size:1.1rem;font-weight:800;color:${pct>=90?'#48bb78':pct>=60?'#ecc94b':'#fc8181'}">${pct}%</span>
+          <span class="badge-label">有效覆盖率</span>
+        </div>
+      </div>
+      <div style="margin-bottom:18px;">
+        <div style="height:8px;background:#2d3748;border-radius:4px;overflow:hidden;display:flex;">
+          <div style="width:${pct}%;background:#48bb78;transition:width .5s"></div>
+          <div style="width:${pctNg}%;background:#ecc94b;transition:width .5s"></div>
+          <div style="width:${pctBad}%;background:#fc8181;transition:width .5s"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:5px;font-size:.75rem;color:#718096;">
+          <span><span style="color:#48bb78">■</span> 有字形 ${pct}%</span>
+          <span><span style="color:#ecc94b">■</span> 无字形 ${pctNg}%</span>
+          <span><span style="color:#fc8181">■</span> 缺失 ${pctBad}%</span>
+        </div>
+      </div>
+      <div class="view-toggle">
+        <button class="vtbtn ${textViewMode==='cells'?'active':''}" onclick="setViewMode('cells')">🔲 逐字卡片</button>
+        <button class="vtbtn ${textViewMode==='inline'?'active':''}" onclick="setViewMode('inline')">📄 行内高亮</button>
+      </div>
+      <div id="charDisplayArea">${renderTextView(text,codepoints)}</div>
+      ${hasIssue?`
+        <div class="issue-section-header">
+          <span class="issue-section-title">问题字符详情</span>
+          <span class="issue-section-line"></span>
+          <button class="export-all-btn" onclick="exportAllCSV()">
+            📋 导出全部问题字符 CSV
+            <span style="background:#2d3748;border-radius:4px;padding:1px 6px;font-size:.72rem;margin-left:2px">${lastNoGlyphMap.size+lastMissingMap.size} 种</span>
+          </button>
+        </div>
+        <div class="issue-panels">
+          ${renderIssuePanel('no-glyph',lastNoGlyphMap,lastAnalyzedText)}
+          ${renderIssuePanel('missing',lastMissingMap,lastAnalyzedText)}
+        </div>`:''}
+    </div>`;
+}
+
+function renderTextView(text,codepoints){
+  if(textViewMode==='cells'){
+    return`<div class="char-analysis-row">${[...text].map((ch)=>{
+      const cp=ch.codePointAt(0),sp=isSpace(cp),st=sp?'space':getCharState(cp);
+      const display=sp?(cp===10?'↵':cp===9?'⇥':'·'):ch;
+      const hex=cp.toString(16).toUpperCase().padStart(4,'0');
+      return`<div class="ca-cell ${st}" onmouseenter="showTip(event,${cp})" onmouseleave="hideTip()">
+        <span class="ca-glyph ${st}" style="${!sp&&st!=='missing'?`font-family:'${fontName}',sans-serif;`:''}">${escHtml(display)}</span>
+        <span class="ca-code">U+${hex}</span>
+        <span class="ca-status ${st}">${{supported:'✓',space:'sp','no-glyph':'⚠',missing:'✗'}[st]}</span>
+      </div>`;
+    }).join('')}</div>`;
+  } else {
+    const spans=[...text].map(ch=>{
+      const cp=ch.codePointAt(0);
+      if(cp===10) return '<br>';
+      if(isSpace(cp)) return`<span class="char-sp">${escHtml(ch)}</span>`;
+      const st=getCharState(cp),tip=`U+${cp.toString(16).toUpperCase().padStart(4,'0')}`;
+      const cls={'supported':'char-ok','no-glyph':'char-ng','missing':'char-bad'}[st];
+      return`<span class="${cls}" title="${tip}" style="${st!=='missing'?`font-family:'${fontName}',sans-serif;`:''}">${escHtml(ch)}</span>`;
+    }).join('');
+    return`<div class="inline-render">${spans}</div>
+      <div class="inline-legend">
+        <span><span style="color:#9ae6b4">■</span> 有字形（正常渲染）</span>
+        <span><span style="color:#ecc94b;border-bottom:2px dashed #ecc94b">■</span> 映射但无字形</span>
+        <span><span style="color:#fc8181;text-decoration:underline wavy #fc8181">■</span> 完全缺失</span>
+      </div>`;
+  }
+}
+
+function setViewMode(mode){textViewMode=mode;const inp=document.getElementById('textInput');if(inp&&inp.value.trim())analyzeText();}
+function loadSample(type){
+  const inp=document.getElementById('textInput');if(!inp)return;
+  const s={
+    viet:'Tiếng Việt xin chào thế giới!\nĐây là bài kiểm tra phông chữ.\nÁnh nắng mặt trời rực rỡ.\nNgười Việt yêu nước nồng nàn.',
+    mixed:'Hello World! こんにちは 你好 안녕하세요\nАBC Ñoño Ünîcödé Test 123\nTiếng Việt © ® ™ € £ ¥ → ∑',
+  };
+  inp.value=s[type]||'';document.getElementById('charCounter').textContent=`${[...inp.value].length} 个字符`;analyzeText();
+}
+function clearText(){
+  const inp=document.getElementById('textInput');if(inp)inp.value='';
+  document.getElementById('charCounter').textContent='0 个字符';
+  document.getElementById('analysisResult').innerHTML='';
+  lastNoGlyphMap=new Map();lastMissingMap=new Map();lastAnalyzedText='';
+}
+
+// ===================== Misc =====================
+function switchTab(t){currentTab=t;currentPage=0;renderTabs();renderContent();}
+function goPage(p){currentPage=p;renderContent();window.scrollTo(0,0);}
+function toggleBlock(id){const el=document.getElementById(id);if(el)el.classList.toggle('open');}
+function filterChars(q){
+  const c=document.getElementById('charGridContainer');if(!c)return;
+  let f;
+  if(!q.trim())f=allChars.slice(currentPage*PAGE_SIZE,(currentPage+1)*PAGE_SIZE);
+  else if(q.toLowerCase().startsWith('u+'))f=allChars.filter(c=>c===parseInt(q.slice(2),16));
+  else f=allChars.filter(c=>String.fromCodePoint(c).toLowerCase().includes(q.toLowerCase())||c.toString(16).includes(q.toLowerCase()));
+  c.innerHTML=renderCharGrid(f);
+}
+function showTip(e,cp){
+  const t=document.getElementById('tooltip');
+  const st=isSpace(cp)?'space':getCharState(cp);
+  const stLabel={'supported':'✓ 有字形数据','no-glyph':'⚠ 映射但无字形','missing':'✗ 完全缺失','space':'空白符'};
+  const stColor={'supported':'#48bb78','no-glyph':'#ecc94b','missing':'#fc8181','space':'#718096'};
+  t.innerHTML=`<div style="font-size:1.5rem;font-family:'${fontName}',sans-serif;text-align:center">${String.fromCodePoint(cp)}</div>
+    <div style="color:#667eea;font-family:monospace">U+${cp.toString(16).toUpperCase().padStart(4,'0')}</div>
+    <div style="color:#94a3b8">十进制: ${cp}</div>
+    <div style="color:${stColor[st]};font-weight:600">${stLabel[st]}</div>`;
+  t.style.display='block';t.style.left=(e.clientX+14)+'px';t.style.top=(e.clientY-10)+'px';
+}
+function hideTip(){document.getElementById('tooltip').style.display='none';}
+
+// ===================== Load Font =====================
+async function loadFont(buffer,filename){
+  document.getElementById('loadingArea').style.display='block';
+  document.getElementById('initial').style.display='none';
+  await new Promise(r=>setTimeout(r,50));
+  try{
+    fontName='Font_'+Date.now();
+    const face=new FontFace(fontName,`url(${URL.createObjectURL(new Blob([buffer],{type:'font/ttf'}))})`);
+    await face.load();document.fonts.add(face);
+    const result=new TTFParser(buffer).parse();
+    charToGlyph=result.charToGlyph;glyphsWithData=result.glyphsWithData;
+    allChars=[...charToGlyph.keys()].sort((a,b)=>a-b);
+    classified=classifyChars(allChars);
+    document.getElementById('loadingArea').style.display='none';
+    document.getElementById('app').style.display='block';
+    renderStats(result.names,result.fontInfo,filename);
+    renderTabs();renderContent();
+  }catch(e){
+    document.getElementById('loadingArea').innerHTML=`<div class="loading"><div style="font-size:3rem">❌</div><p style="color:#fc8181;margin-top:12px">解析失败: ${e.message}</p></div>`;
+  }
+}
+
+// ===================== Init =====================
+document.getElementById('fileInput').addEventListener('change',async e=>{const f=e.target.files[0];if(f)loadFont(await f.arrayBuffer(),f.name);});
+const ua=document.getElementById('uploadArea');
+ua.addEventListener('dragover',e=>{e.preventDefault();ua.classList.add('dragging');});
+ua.addEventListener('dragleave',()=>ua.classList.remove('dragging'));
+ua.addEventListener('drop',async e=>{e.preventDefault();ua.classList.remove('dragging');const f=e.dataTransfer.files[0];if(f)loadFont(await f.arrayBuffer(),f.name);});
+document.getElementById('autoLoadBtn').addEventListener('click',async()=>{
+  document.getElementById('loadingArea').style.display='block';
+  document.getElementById('initial').style.display='none';
+  try{
+    const r=await fetch('https://aichat-1258567330.cos.ap-singapore.myqcloud.com/files/492898/d8e2998a-b4b8-4f99-8f28-cd866bf0aea0.ttf');
+    if(!r.ok)throw new Error('网络请求失败');
+    loadFont(await r.arrayBuffer(),'DefaultFont_VIET.ttf');
+  }catch(e){
+    document.getElementById('loadingArea').innerHTML=`<div class="loading"><div style="font-size:3rem">⚠️</div><p style="color:#fc8181;margin-top:12px">加载失败: ${e.message}</p><button class="btn-upload" style="margin-top:16px" onclick="location.reload()">重试</button></div>`;
+  }
+});
+</script>
+</body>
+</html>
